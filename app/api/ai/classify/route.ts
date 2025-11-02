@@ -61,14 +61,19 @@ export async function POST(req: NextRequest) {
     let labels: Array<{ label: string; score: number }> = []
     let success = false
     const attempts: any[] = []
+  // Effective HF key used for hosted inference. May be overridden for dev via header when enabled.
+  // Use globalThis access to avoid TypeScript "process" resolution issues in some environments.
+  let EFFECTIVE_HF_KEY = (globalThis as any).process?.env?.HUGGING_FACE_API_KEY
 
     // 1) Try local vision server first if configured
-    const LOCAL_URL = process.env.LOCAL_VISION_URL?.trim()
+  const LOCAL_URL = ((globalThis as any).process?.env?.LOCAL_VISION_URL as string | undefined)?.trim()
+  // Allow configuring the local server timeout (ms). Default to 30s to accommodate free-hosted cold starts.
+  const LOCAL_TIMEOUT_MS = Number((globalThis as any).process?.env?.LOCAL_VISION_TIMEOUT_MS) || 30000
     if (LOCAL_URL && LOCAL_URL.length > 0) {
       const t0 = Date.now()
       try {
         const ac = new AbortController()
-        const to = setTimeout(() => ac.abort(), 7000)
+        const to = setTimeout(() => ac.abort(), LOCAL_TIMEOUT_MS)
         const resp = await fetch(`${LOCAL_URL.replace(/\/$/, '')}/classify`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/octet-stream' },
@@ -101,8 +106,13 @@ export async function POST(req: NextRequest) {
 
     // 2) If local failed or not configured, try hosted models via HF
     if (!success) {
-      const HF_API_KEY = process.env.HUGGING_FACE_API_KEY
-      if (!HF_API_KEY) {
+      // Allow an optional request header to provide an HF key for local/dev testing when explicitly enabled.
+      // Enable by setting ALLOW_HF_HEADER=true in your environment (use with caution).
+      const headerHfKey = req.headers.get('x-hf-api-key')?.trim()
+  EFFECTIVE_HF_KEY = headerHfKey && (globalThis as any).process?.env?.ALLOW_HF_HEADER === 'true' ? headerHfKey : (globalThis as any).process?.env?.HUGGING_FACE_API_KEY
+      if (!EFFECTIVE_HF_KEY) {
+        // Log attempts to server logs to aid debugging (will include local-server attempt details)
+        console.error('🧭 Classification attempts before failing:', JSON.stringify(attempts, null, 2))
         // No key and no local success: return clearly
         return new Response(JSON.stringify({ error: 'HUGGING_FACE_API_KEY missing and local server not available', attempts }), { status: 401 })
       }
@@ -116,7 +126,7 @@ export async function POST(req: NextRequest) {
           {
             method: 'POST',
             headers: {
-              Authorization: `Bearer ${process.env.HUGGING_FACE_API_KEY}`,
+              Authorization: `Bearer ${EFFECTIVE_HF_KEY}`,
               'Content-Type': 'application/octet-stream',
               Accept: 'application/json',
               'User-Agent': 'NextJS-AI-Classifier/1.0',
@@ -163,11 +173,10 @@ export async function POST(req: NextRequest) {
     // Optional reasoning with text model
     let reasoning = ''
     try {
-      const HF_API_KEY = process.env.HUGGING_FACE_API_KEY
-      const textResp = HF_API_KEY ? await fetch(`https://api-inference.huggingface.co/models/${TEXT_MODEL}`, {
+      const textResp = EFFECTIVE_HF_KEY ? await fetch(`https://api-inference.huggingface.co/models/${TEXT_MODEL}`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${HF_API_KEY}`,
+          Authorization: `Bearer ${EFFECTIVE_HF_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
