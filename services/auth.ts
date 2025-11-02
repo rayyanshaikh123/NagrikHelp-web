@@ -7,7 +7,9 @@ export type AuthResponse = {
   email: string
 }
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || ""
+// Default to production Render URL when NEXT_PUBLIC_API_BASE_URL is not set.
+// You can override this by setting NEXT_PUBLIC_API_BASE_URL in your environment.
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://nagrikhelp-backend-u8gj.onrender.com"
 
 async function handleHttpError(resp: Response): Promise<never> {
   // Try to parse JSON body for useful error messages, fall back to status text
