@@ -1,0 +1,7 @@
+.light-rays-container {
+  width: 100%;
+  height: 100%;
+  /* Position & layering now controlled by passed Tailwind classes */
+  pointer-events: none;
+  overflow: hidden;
+}

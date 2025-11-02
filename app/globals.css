@@ -1,0 +1,238 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Monochrome light */
+  --background: #ffffff;
+  --foreground: #111111;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+  --primary: #111111; /* pure dark for emphasis */
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #111111;
+  --muted: #f5f5f5;
+  --muted-foreground: #555555;
+  --accent: #e5e5e5;
+  --accent-foreground: #111111;
+  --destructive: #b91c1c; /* still red for clarity */
+  --destructive-foreground: #ffffff;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #111111;
+  --chart-1: #111111;
+  --chart-2: #333333;
+  --chart-3: #555555;
+  --chart-4: #777777;
+  --chart-5: #999999;
+  --radius: 0.625rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111111;
+  --sidebar-primary: #111111;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #111111;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #111111;
+  --brand: #111111;
+  --interactive: #00a2ff; /* new accent for interactive glow (light mode) */
+}
+
+.dark {
+  /* Monochrome dark */
+  --background: #0a0a0a;
+  --foreground: #f5f5f5;
+  --card: #121212;
+  --card-foreground: #f5f5f5;
+  --popover: #121212;
+  --popover-foreground: #f5f5f5;
+  --primary: #f5f5f5;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1c1c1c;
+  --secondary-foreground: #f5f5f5;
+  --muted: #1c1c1c;
+  --muted-foreground: #a3a3a3;
+  --accent: #222222;
+  --accent-foreground: #f5f5f5;
+  --destructive: #f87171;
+  --destructive-foreground: #1c1c1c;
+  --border: #262626;
+  --input: #262626;
+  --ring: #cccccc;
+  --chart-1: #f5f5f5;
+  --chart-2: #d4d4d4;
+  --chart-3: #a3a3a3;
+  --chart-4: #737373;
+  --chart-5: #525252;
+  --sidebar: #121212;
+  --sidebar-foreground: #f5f5f5;
+  --sidebar-primary: #f5f5f5;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #222222;
+  --sidebar-accent-foreground: #f5f5f5;
+  --sidebar-border: #262626;
+  --sidebar-ring: #cccccc;
+  --brand: #f5f5f5;
+  --interactive: #00ffff; /* new accent for interactive glow (dark mode) */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-brand: var(--brand);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  /* Use Plus Jakarta Sans (provided by next/font in layout) when available, fall back to system fonts */
+  :root {
+    --ui-font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial;
+    --brand-font: "Poppins", "Plus Jakarta Sans", system-ui, -apple-system,
+      "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-jakarta, var(--ui-font));
+    font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+  }
+  html {
+    overflow-x: hidden; /* Prevent horizontal scroll */
+  }
+
+  /* Custom smooth cursor overrides */
+  .cursor-none,
+  .cursor-none * {
+    cursor: none !important;
+  }
+  .cursor-none input,
+  .cursor-none textarea,
+  .cursor-none [contenteditable="true"] {
+    cursor: text !important;
+  }
+  /* Allow opt-out by adding .cursor-auto on an element */
+  .cursor-none .cursor-auto,
+  .cursor-none .cursor-auto * {
+    cursor: auto !important;
+  }
+
+  /* Desktop-only custom cursor scope: hides default cursor on hover for all elements except text inputs/contenteditable.
+     Applied via a wrapper (.smooth-cursor-scope). Keeps mobile unaffected. */
+  @media (min-width: 768px) {
+    .smooth-cursor-scope,
+    .smooth-cursor-scope * {
+      cursor: none !important;
+    }
+    .smooth-cursor-scope input,
+    .smooth-cursor-scope textarea,
+    .smooth-cursor-scope [contenteditable="true"],
+    .smooth-cursor-scope .cursor-text,
+    .smooth-cursor-scope .cursor-auto,
+    .smooth-cursor-scope .cursor-pointer-allow,
+    .smooth-cursor-scope .cursor-default-allow {
+      cursor: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar for mobile navigation */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
+}
+
+/* Specific fixes for tablet/medium screen sizes */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .how-it-works-section {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Blinking indicator animation */
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  75% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.blink-indicator {
+  animation: blink 3s ease-in-out infinite;
+}
+
+/* Brand font utility */
+.font-brand {
+  font-family: var(--font-poppins, var(--brand-font));
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+  /* Subheadings use Poppins for a friendly geometric feel */
+  h2, h3, h4, .subheading {
+    font-family: var(--font-poppins, var(--brand-font));
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+  }
+
+  .subheading {
+    font-size: 1.05rem;
+  }
