@@ -27,9 +27,12 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: "Civic Issue Reporter",
-  description: "Crowdsourced Civic Issue Reporting & Resolution UI",
+  title: "NagrikHelp",
+  description: "Empowering citizens to report and resolve civic issues efficiently",
   generator: "v0.app",
+  icons: {
+    icon: '/logo/nagrikhelp.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
