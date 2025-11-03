@@ -15,19 +15,26 @@ import LogoLoop from '@/components/LogoLoop'
 export default function Home() {
   const router = useRouter()
   const [showContent, setShowContent] = useState(false)
+  const hasRedirected = useRef(false)
   
-  // Redirect first-time visitors to the dedicated welcome page
+  // Redirect all visitors to the welcome page on every visit
   useEffect(() => {
+    if (hasRedirected.current) return
+    hasRedirected.current = true
+    
     try {
       const urlParams = new URLSearchParams(window.location.search)
-      const force = urlParams.get('showWelcome') === '1' || urlParams.get('showWelcome') === 'true'
-      const seen = localStorage.getItem('seenWelcome')
-      // If not seen and not forced, send them to /welcome where the full-page splash lives
-      if (!seen && !force) {
+      const skipWelcome = urlParams.get('skipWelcome') === '1' || urlParams.get('skipWelcome') === 'true'
+      // Always redirect to welcome unless explicitly skipped
+      if (!skipWelcome) {
         router.replace('/welcome')
       } else {
         // Show content with fade-in after a brief moment
         setTimeout(() => setShowContent(true), 50)
+        // Clean up the URL after showing content
+        setTimeout(() => {
+          window.history.replaceState({}, '', '/')
+        }, 100)
       }
     } catch (e) {
       // ignore (server render or localStorage unavailable)

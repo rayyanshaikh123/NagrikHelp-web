@@ -29,9 +29,8 @@ export default function WelcomePage() {
         // Navigate during the pull-up animation for seamless transition
         setTimeout(() => {
           console.log('Navigating to home')
-          try { localStorage.setItem('seenWelcome', '1') } catch {}
-          // Use push instead of replace for smoother transition
-          router.push('/')
+          // Use replace to remove skipWelcome from history, allowing welcome on next refresh
+          router.replace('/?skipWelcome=true')
         }, 700) // Navigate midway through pull-up
       }, 900) // Wait for text to fade out
     }, 600)
