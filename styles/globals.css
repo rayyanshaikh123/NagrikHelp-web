@@ -123,3 +123,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Splash / loading animation for initial app loading screen */
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(6px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+.splash-animate {
+  animation: fadeInOut 2.6s ease-in-out infinite;
+}
