@@ -20,12 +20,37 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
     try {
+      // Basic frontend validations
+      const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+      if (!emailValid) {
+        setError('Please enter a valid email address.')
+        setLoading(false)
+        return
+      }
+      if (!password || password.length < 6) {
+        setError('Password must be at least 6 characters.')
+        setLoading(false)
+        return
+      }
       const auth = await loginApi({ email, password })
+      // Validate response shape
+      if (!auth || !auth.token) {
+        setError('Login failed: invalid credentials or user does not exist.')
+        setLoading(false)
+        return
+      }
       persistAuth(auth)
       const role = mapRoleToFrontend(auth.role)
       router.replace(role === "admin" ? "/admin" : "/citizen/public")
     } catch (e: any) {
-      setError(e?.message || "Login failed")
+      // Handle common API error statuses if available
+      if (e?.status === 401 || /401/.test(String(e?.message))) {
+        setError('Invalid email or password.')
+      } else if (e?.status === 404) {
+        setError('User not found.')
+      } else {
+        setError(e?.message || "Login failed")
+      }
     } finally {
       setLoading(false)
     }
@@ -85,6 +110,7 @@ export default function LoginPage() {
                   <ul className="mt-2 ml-4 list-none text-sm space-y-1">
                     <li><Link href="/" className="underline">Project home</Link></li>
                     <li><a href="/AI_SETUP_FRONTEND.md" className="underline">AI setup & environment</a></li>
+                    <li><Link href="/test-loading" className="underline">Test loading screen</Link></li>
                     <li><a href="https://github.com/rayyanshaikh123/NagrikHelp-web" className="underline" target="_blank" rel="noreferrer">Source on GitHub</a></li>
                   </ul>
                 </div>
