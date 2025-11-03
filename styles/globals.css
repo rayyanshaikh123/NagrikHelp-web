@@ -134,3 +134,120 @@
 .splash-animate {
   animation: fadeInOut 2.6s ease-in-out infinite;
 }
+
+/* One-time welcome animation */
+@keyframes fadeOnce {
+  0% { opacity: 0; transform: translateY(12px) scale(1.02); }
+  12% { opacity: 1; transform: translateY(0) scale(1); }
+  80% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-12px) scale(0.98); }
+}
+.welcome-splash {
+  animation: fadeOnce 2600ms cubic-bezier(.22,.9,.28,1) forwards;
+}
+
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2147483646;
+  /* stronger overlay so the splash is clearly visible during testing */
+  background: rgba(0,0,0,0.72);
+}
+.welcome-splash {
+  color: #fff;
+  text-shadow: 0 6px 30px rgba(0,0,0,0.6);
+}
+
+/* Poppins text pop / reveal animations */
+@keyframes popIn {
+  0% { opacity: 0; transform: translateY(12px) scale(0.98); filter: blur(6px); }
+  40% { opacity: 1; transform: translateY(0) scale(1.02); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+.pop-animate {
+  animation: popIn 900ms cubic-bezier(.2,.9,.25,1) both;
+}
+
+/* Optional stagger utility for multi-line / multi-word reveals */
+.pop-stagger > * {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: popIn 900ms cubic-bezier(.2,.9,.25,1) both;
+}
+.pop-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.pop-stagger > *:nth-child(2) { animation-delay: 80ms; }
+.pop-stagger > *:nth-child(3) { animation-delay: 160ms; }
+.pop-stagger > *:nth-child(4) { animation-delay: 240ms; }
+.pop-stagger > *:nth-child(5) { animation-delay: 320ms; }
+
+/* BlurText animation - smooth blur-in effect */
+@keyframes blurTextIn {
+  0% {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(-15px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(0);
+  }
+}
+
+.blur-text-animate {
+  opacity: 0;
+  animation: blurTextIn 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, filter, transform;
+}
+
+/* Curtain opening animation - splits from center */
+@keyframes curtainLeft {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes curtainRight {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.curtain-container {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: all;
+  display: flex;
+  overflow: hidden;
+}
+
+.curtain-left,
+.curtain-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50vw;
+  background: hsl(var(--background));
+  will-change: transform;
+}
+
+.curtain-left {
+  left: 0;
+  animation: curtainLeft 1200ms cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+.curtain-right {
+  right: 0;
+  animation: curtainRight 1200ms cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}

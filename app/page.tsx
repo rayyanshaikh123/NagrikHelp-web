@@ -14,6 +14,26 @@ import LogoLoop from '@/components/LogoLoop'
 
 export default function Home() {
   const router = useRouter()
+  const [showContent, setShowContent] = useState(false)
+  
+  // Redirect first-time visitors to the dedicated welcome page
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      const force = urlParams.get('showWelcome') === '1' || urlParams.get('showWelcome') === 'true'
+      const seen = localStorage.getItem('seenWelcome')
+      // If not seen and not forced, send them to /welcome where the full-page splash lives
+      if (!seen && !force) {
+        router.replace('/welcome')
+      } else {
+        // Show content with fade-in after a brief moment
+        setTimeout(() => setShowContent(true), 50)
+      }
+    } catch (e) {
+      // ignore (server render or localStorage unavailable)
+      setShowContent(true)
+    }
+  }, [])
   const howRef = useRef<HTMLElement | null>(null)
   const featuresRef = useRef<HTMLElement | null>(null)
   const faqRef = useRef<HTMLElement | null>(null)
@@ -47,27 +67,43 @@ export default function Home() {
   const sectionRefs = { features: featuresRef, 'how-it-works': howRef, faq: faqRef }
 
   return (
-    <main className="min-h-dvh flex flex-col">
-      {/* Floating Navigation (replaces old header & pill nav) */}
-      <FloatingNav
-        navItems={[
-          { name: 'Home', link: '/', icon: <IconHome className="h-4 w-4" /> },
-          { name: 'Features', link: '#features', icon: <IconListDetails className="h-4 w-4" /> },
-          { name: 'How It Works', link: '#how-it-works', icon: <IconListDetails className="h-4 w-4" /> },
-          { name: 'Roles', link: '/roles', icon: <IconListDetails className="h-4 w-4" /> },
-          { name: 'Get Started', link: '/roles', icon: <IconDeviceMobile className="h-4 w-4" /> },
-        ]}
-        hideOnScroll
-        threshold={10}
-        sectionRefs={sectionRefs}
-      />
-
-      {/* Hero with added top margin for spacing below floating nav */}
-   
-        <Hero />
+    <>
+      <style jsx global>{`
+        @keyframes fadeInPage {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        .page-fade-in {
+          animation: fadeInPage 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+        }
+      `}</style>
       
+      <div className={showContent ? 'page-fade-in' : 'opacity-0'}>
+        <main className="min-h-dvh flex flex-col">
+          {/* Floating Navigation (replaces old header & pill nav) */}
+          <FloatingNav
+            navItems={[
+              { name: 'Home', link: '/', icon: <IconHome className="h-4 w-4" /> },
+              { name: 'Features', link: '#features', icon: <IconListDetails className="h-4 w-4" /> },
+              { name: 'How It Works', link: '#how-it-works', icon: <IconListDetails className="h-4 w-4" /> },
+              { name: 'Roles', link: '/roles', icon: <IconListDetails className="h-4 w-4" /> },
+              { name: 'Get Started', link: '/roles', icon: <IconDeviceMobile className="h-4 w-4" /> },
+            ]}
+            hideOnScroll
+            threshold={10}
+            sectionRefs={sectionRefs}
+          />
 
-      {/* Features ( concise ) */}
+          {/* Hero with added top margin for spacing below floating nav */}
+       
+            <Hero />
+          
+
+          {/* Features ( concise ) */}
       <section id="features" ref={featuresRef} className="mx-auto w-full max-w-7xl px-6 py-16 md:py-24">
         <div className="mb-10 flex flex-col gap-3">
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Platform Capabilities</h2>
@@ -238,7 +274,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
-    </main>
+        </main>
+      </div>
+    </>
   )
 }
 

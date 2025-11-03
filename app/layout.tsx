@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
+import dynamic from "next/dynamic"
 import "leaflet/dist/leaflet.css"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -32,6 +33,7 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // debug helper removed — no client-only debug button is mounted anymore
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -52,6 +54,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" enableSystem defaultTheme="system" disableTransitionOnChange>
           <ThemeClickSpark>
             <div className="smooth-cursor-scope">
+              {/* Welcome splash (client-only) - render the dynamic component directly.
+                  `dynamic(..., { ssr: false })` ensures this only runs client-side. Avoid
+                  checking typeof window here because that check runs during server render
+                  and prevents the client from mounting the dynamic component. */}
+              {/* small debug button to force the splash during development/testing */}
+              {/* debug helper removed */}
               <div className="hidden md:block" aria-hidden="true">
                 <SmoothCursor zIndex={2147483647} />
               </div>
