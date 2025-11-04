@@ -23,6 +23,7 @@ import {
   Cell,
   Legend,
 } from "recharts"
+import { useHeroToast } from "@/hooks/use-hero-toast"
 
 export default function ReportsPage() {
   const router = useRouter()
@@ -79,6 +80,7 @@ function ReportsContent() {
   const [loadingReport, setLoadingReport] = useState(false)
   const [reportMonth, setReportMonth] = useState(now.getMonth() + 1) // 1-12
   const [reportYear, setReportYear] = useState(now.getFullYear())
+  const { success, error, info } = useHeroToast()
 
   async function generateReport() {
     try {
@@ -87,8 +89,10 @@ function ReportsContent() {
       setReport(r)
       // Auto trigger PDF download after successful generation
       await downloadMonthlyResolvedPdf(reportYear, reportMonth)
+      success("Report generated", `Total resolved: ${r.totalResolved}. Downloading PDF…`)
     } catch (e) {
       console.error(e)
+      error("Report generation failed", (e as any)?.message || "Unable to generate report")
     } finally {
       setLoadingReport(false)
     }
@@ -98,8 +102,10 @@ function ReportsContent() {
     try {
       setLoadingReport(true)
       await downloadMonthlyResolvedPdf(reportYear, reportMonth)
+      info("Downloading PDF…")
     } catch (e) {
       console.error(e)
+      error("Download failed", (e as any)?.message || "Unable to download PDF")
     } finally {
       setLoadingReport(false)
     }

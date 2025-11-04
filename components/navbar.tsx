@@ -1,23 +1,25 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { logout as authLogout, getAuthToken } from "@/services/auth"
 import { Bell, Menu } from "lucide-react"
 import { NotificationsDialog } from "@/components/notifications-dialog"
 import { fetchUnreadCount } from "@/services/notifications"
-import { useToast } from "@/hooks/use-toast"
+import { useHeroToast } from "@/hooks/use-hero-toast"
 import { useNotificationStream } from "@/hooks/use-notification-stream"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
 
 export default function Navbar() {
+  const router = useRouter()
   const [role, setRole] = useState<string | null>(null)
   const [backendRole, setBackendRole] = useState<string | null>(null)
   const [notifOpen, setNotifOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
-  const { toast } = useToast()
+  const { info } = useHeroToast()
 
   useEffect(() => {
     setRole(localStorage.getItem("role"))
@@ -34,7 +36,7 @@ export default function Navbar() {
     getToken: () => getAuthToken(),
     onNotification: (n) => {
       setUnreadCount(c => c + 1)
-      toast({ title: 'New notification', description: n.message })
+      info('New notification', n.message)
     },
     onStatusChange: ({ live }) => {
       if (live) {
@@ -137,7 +139,9 @@ export default function Navbar() {
                 onClick={() => {
                   authLogout()
                   try { localStorage.removeItem("userId") } catch {}
-                  window.location.href = "/"
+                  // Show a toast and navigate client-side so the toast remains visible
+                  info('Logged out', 'See you soon!')
+                  router.replace('/')
                 }}
               >
                 Logout

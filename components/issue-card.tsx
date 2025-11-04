@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import type { Issue } from "@/services/issues"
 import { voteIssue, updateCitizenIssue, deleteCitizenIssue } from "@/services/issues"
 import { useState, useEffect } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { useHeroToast } from "@/hooks/use-hero-toast"
 import { followIssueByShareToken, unfollowIssueByShareToken } from "@/services/issues"
 import { Star } from "lucide-react"
 import { useSWRConfig } from "swr"
@@ -124,7 +124,7 @@ export default function IssueCard({
 
   const [isOwner, setIsOwner] = useState(ownerMode)
   const [shareOpen, setShareOpen] = useState(false)
-  const { toast } = useToast()
+  const { success, error, toast } = useHeroToast()
   const [followOpen, setFollowOpen] = useState(false)
   const [isFollowing, setIsFollowing] = useState(false)
 
@@ -226,7 +226,7 @@ export default function IssueCard({
                     await unfollowIssueByShareToken(issue.shareToken as string, { email, phone })
                     removeFollowedToken(issue.shareToken as string)
                     setIsFollowing(false)
-                    toast({ title: 'Unfollowed', description: 'You will no longer receive updates.' })
+                    success('Unfollowed', 'You will no longer receive updates.')
                     return
                   }
                   if (!email && !phone) {
@@ -236,9 +236,9 @@ export default function IssueCard({
                   await followIssueByShareToken(issue.shareToken as string, { email, phone })
                   addFollowedToken(issue.shareToken as string)
                   setIsFollowing(true)
-                  toast({ title: 'Following issue', description: 'You will receive updates.' })
+                  success('Following issue', 'You will receive updates.')
                 } catch (e:any) {
-                  toast({ title: isFollowing ? 'Unfollow failed' : 'Follow failed', description: e?.body?.message || e?.message || (isFollowing ? 'Unable to unfollow' : 'Unable to follow') })
+                  error(isFollowing ? 'Unfollow failed' : 'Follow failed', e?.body?.message || e?.message || (isFollowing ? 'Unable to unfollow' : 'Unable to follow'))
                 }
               }}>
                 <Star className={`${isFollowing ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground'} h-4 w-4`} />
@@ -384,10 +384,10 @@ export default function IssueCard({
             await followIssueByShareToken(issue.shareToken as string, { email, phone })
             if (email) window.localStorage.setItem('email', email)
             if (phone) window.localStorage.setItem('phone', phone)
-            toast({ title: 'Following issue', description: 'You will receive updates.' })
+            success('Following issue', 'You will receive updates.')
             return
           } catch (err: any) {
-            toast({ title: 'Follow failed', description: err?.body?.message || err?.message || 'Unable to follow' })
+            error('Follow failed', err?.body?.message || err?.message || 'Unable to follow')
             throw err
           }
         }} />

@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
+import { useHeroToast } from "@/hooks/use-hero-toast"
 import { createAdmin } from "@/services/admin"
 
 export default function CreateAdminForm() {
@@ -15,7 +15,7 @@ export default function CreateAdminForm() {
   const [phone, setPhone] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
+  const { success, error: toastError } = useHeroToast()
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -27,9 +27,10 @@ export default function CreateAdminForm() {
       setEmail("")
       setPassword("")
       setPhone("")
-      toast({ title: "Admin created", description: `${email} can now sign in as admin.` })
+      success("Admin created", `${email} can now sign in as admin.`)
     } catch (e: any) {
       setError(e?.message || "Failed to create admin")
+      toastError("Create admin failed", e?.message || "Unable to create admin")
     } finally {
       setLoading(false)
     }

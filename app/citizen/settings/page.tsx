@@ -6,7 +6,7 @@ import GlassPanel from '@/components/glass-panel'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { API_BASE } from '@/services/auth'
-import { useToast } from '@/hooks/use-toast'
+import { useHeroToast } from '@/hooks/use-hero-toast'
 import CitizenPageShell from '@/components/citizen-page-shell'
 
 export default function CitizenSettingsPage() {
@@ -24,7 +24,7 @@ export default function CitizenSettingsPage() {
     } catch {}
   }, [router])
   const userId = useMemo(() => (typeof window !== 'undefined' ? localStorage.getItem('userId') || 'demo-user-1' : 'demo-user-1'), [])
-  const { toast } = useToast()
+  const { success, error, info } = useHeroToast()
 
   async function deleteAccount() {
     try {
@@ -37,17 +37,17 @@ export default function CitizenSettingsPage() {
         localStorage.removeItem('name')
         localStorage.removeItem('email')
         localStorage.removeItem('userId')
-        toast({ title: 'Account deleted', description: 'Your account and related data were removed.' })
+        success('Account deleted', 'Your account and related data were removed.')
         window.location.href = '/register'
       } else if (res.status === 401) {
-        toast({ title: 'Unauthorized', description: 'Please login again.' })
+        error('Unauthorized', 'Please login again.')
       } else if (res.status === 404) {
-        toast({ title: 'Not found', description: 'Account already removed.' })
+        info('Not found', 'Account already removed.')
       } else {
-        toast({ title: 'Delete failed', description: 'Unexpected response: ' + res.status })
+        error('Delete failed', 'Unexpected response: ' + res.status)
       }
     } catch (e:any) {
-      toast({ title: 'Delete failed', description: e?.message || 'Request error' })
+      error('Delete failed', e?.message || 'Request error')
     }
   }
 
