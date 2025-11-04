@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { SmoothCursor } from "@/components/ui/smooth-cursor"
 import ThemeHotkey from "@/components/theme-hotkey"
 import { ThemeClickSpark } from "@/components/theme-click-spark"
+import { HeroToastProvider } from "@/components/hero-toast-provider"
 import { Plus_Jakarta_Sans, Poppins } from 'next/font/google'
 
 const jakarta = Plus_Jakarta_Sans({ 
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Custom smooth cursor */}
         <ThemeProvider attribute="class" enableSystem defaultTheme="system" disableTransitionOnChange>
           <ThemeClickSpark>
+            <HeroToastProvider />
             <div className="smooth-cursor-scope">
               {/* Welcome splash (client-only) - render the dynamic component directly.
                   `dynamic(..., { ssr: false })` ensures this only runs client-side. Avoid

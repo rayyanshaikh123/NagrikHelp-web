@@ -4,12 +4,13 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { logout as authLogout, getAuthToken } from "@/services/auth"
-import { Bell } from "lucide-react"
+import { Bell, Menu } from "lucide-react"
 import { NotificationsDialog } from "@/components/notifications-dialog"
 import { fetchUnreadCount } from "@/services/notifications"
 import { useToast } from "@/hooks/use-toast"
 import { useNotificationStream } from "@/hooks/use-notification-stream"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
 
 export default function Navbar() {
   const [role, setRole] = useState<string | null>(null)
@@ -24,6 +25,8 @@ export default function Navbar() {
   }, [])
 
   const isCitizen = backendRole === 'CITIZEN'
+  const isAdmin = (role === 'admin') || (backendRole?.toUpperCase?.().includes('ADMIN') ?? false)
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false)
 
   // SSE integration (citizen only)
   const sse = useNotificationStream({
@@ -63,7 +66,58 @@ export default function Navbar() {
   return (
     <>
       <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-end gap-3">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-3">
+          {/* Mobile admin menu trigger */}
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Drawer direction="left" open={adminMenuOpen} onOpenChange={setAdminMenuOpen}>
+                <DrawerTrigger asChild>
+                  <Button size="sm" variant="ghost" className="md:hidden" aria-label="Open menu">
+                    <Menu />
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent className="w-[85%] sm:max-w-sm">
+                  <DrawerHeader>
+                    <DrawerTitle>Admin Menu</DrawerTitle>
+                  </DrawerHeader>
+                  <nav className="px-4 pb-4 space-y-1">
+                    <DrawerClose asChild>
+                      <Link href="/admin" className="block rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
+                        All Issues
+                      </Link>
+                    </DrawerClose>
+                    <DrawerClose asChild>
+                      <Link href="/admin?status=pending" className="block rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
+                        Pending
+                      </Link>
+                    </DrawerClose>
+                    <DrawerClose asChild>
+                      <Link href="/admin?status=in-progress" className="block rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
+                        In-Progress
+                      </Link>
+                    </DrawerClose>
+                    <DrawerClose asChild>
+                      <Link href="/admin?status=resolved" className="block rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
+                        Resolved
+                      </Link>
+                    </DrawerClose>
+                    <DrawerClose asChild>
+                      <Link href="/admin/management" className="block rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
+                        Admin Management
+                      </Link>
+                    </DrawerClose>
+                    <DrawerClose asChild>
+                      <Link href="/admin/reports" className="block rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
+                        Reports
+                      </Link>
+                    </DrawerClose>
+                  </nav>
+                </DrawerContent>
+              </Drawer>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
           <ThemeToggle />
           <div className="relative">
             <Button size="sm" variant="ghost" onClick={()=>setNotifOpen(true)} aria-label="Notifications">
@@ -92,6 +146,7 @@ export default function Navbar() {
           ) : (
             <div className="text-xs text-muted-foreground">Not authenticated</div>
           )}
+          </div>
         </div>
       </header>
       {isCitizen && (
