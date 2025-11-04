@@ -3,6 +3,7 @@
 import { useTheme } from "next-themes"
 import ClickSpark from './ClickSpark'
 import { useEffect, useState } from 'react'
+import { useIsMobile } from '@/components/ui/use-mobile'
 
 interface ThemeClickSparkProps {
   children: React.ReactNode
@@ -11,6 +12,7 @@ interface ThemeClickSparkProps {
 export function ThemeClickSpark({ children }: ThemeClickSparkProps) {
   const { theme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     setMounted(true)
@@ -26,7 +28,8 @@ export function ThemeClickSpark({ children }: ThemeClickSparkProps) {
   // Set spark color based on theme
   const sparkColor = currentTheme === 'dark' ? '#ffffff' : '#000000'
 
-  return (
+  // Only enable click sparks on small screens (cursor disabled). On desktop, render children as-is.
+  return isMobile ? (
     <ClickSpark
       sparkColor={sparkColor}
       sparkSize={6}
@@ -38,5 +41,7 @@ export function ThemeClickSpark({ children }: ThemeClickSparkProps) {
     >
       {children}
     </ClickSpark>
+  ) : (
+    <>{children}</>
   )
 }
