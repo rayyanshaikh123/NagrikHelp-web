@@ -167,7 +167,7 @@ export default function PublicIssueDetailsPage() {
 
   if (!issue) {
     return (
-      <main className="min-h-dvh">
+      <main className="min-h-dvh bg-background">
         <Navbar />
         <section className="mx-auto max-w-4xl p-6">
           <div className="text-sm text-muted-foreground">Loading issue...</div>
@@ -177,14 +177,14 @@ export default function PublicIssueDetailsPage() {
   }
 
   return (
-    <main className="min-h-dvh bg-gray-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+    <main className="min-h-dvh bg-background">
   <Navbar />
-  <section className="mx-auto max-w-6xl p-6">
+  <section className="mx-auto max-w-6xl p-6 pb-24">
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
       {/* Left column: media + map */}
       <div className="lg:col-span-1 space-y-4">
-        <div className="rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
+        <div className="rounded-xl overflow-hidden border bg-card/60 backdrop-blur-sm shadow-sm">
           {issue.imageBase64 || issue.photoUrl ? (
             <img
               src={(issue.imageBase64 || issue.photoUrl) || "/placeholder.svg"}
@@ -192,24 +192,24 @@ export default function PublicIssueDetailsPage() {
               className="w-full h-60 object-cover"
             />
           ) : (
-            <div className="w-full h-60 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+            <div className="w-full h-60 flex items-center justify-center text-sm text-muted-foreground">
               No image provided
             </div>
           )}
-          <div className="p-3 border-t border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/40">
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="p-3 border-t bg-muted/30">
+            <div className="text-xs text-muted-foreground">
               Reported: {new Date(issue.createdAt).toLocaleString()}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-xs text-muted-foreground">
               By: {issue.createdBy || "Unknown"}
             </div>
           </div>
         </div>
 
-        <div className="rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
-          <div className="p-2">
-            <div className="font-medium mb-2 text-slate-800 dark:text-slate-100">Location</div>
-            <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+        <div className="rounded-xl overflow-hidden border bg-card/60 backdrop-blur-sm shadow-sm">
+          <div className="p-3">
+            <div className="font-medium mb-2">Location</div>
+            <div className="text-sm text-muted-foreground mb-2">
               {issue.location || "Not provided"}
             </div>
             <div className="h-48 w-full overflow-hidden rounded-md">
@@ -228,10 +228,10 @@ export default function PublicIssueDetailsPage() {
       <div className="lg:col-span-2 space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{issue.title}</h1>
-            <div className="mt-2 flex items-center gap-3">
+            <h1 className="text-3xl font-semibold tracking-tight">{issue.title}</h1>
+            <div className="mt-3 flex items-center gap-2">
               {issue.category ? (
-                <span className="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300 text-sm">
+                <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
                   {issue.category}
                 </span>
               ) : null}
@@ -239,12 +239,12 @@ export default function PublicIssueDetailsPage() {
               <span
                 role="status"
                 aria-label={`Status: ${issue.status}`}
-                className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                className={`px-3 py-1 rounded-full text-xs font-medium ${
                   issue.status === 'resolved'
-                    ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
+                    ? 'bg-green-500/10 text-green-600 dark:text-green-400'
                     : issue.status === 'in-progress'
-                    ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300'
-                    : 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300'
+                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                    : 'bg-red-500/10 text-red-600 dark:text-red-400'
                 }`}
               >
                 {issue.status === 'resolved'
@@ -254,7 +254,7 @@ export default function PublicIssueDetailsPage() {
                   : 'Pending'}
               </span>
             </div>
-            <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            <div className="mt-2 text-xs text-muted-foreground">
               Issue ID: {issue.id}
             </div>
           </div>
@@ -278,60 +278,60 @@ export default function PublicIssueDetailsPage() {
                 Downvote
               </Button>
             </div>
-            <div className="text-sm text-slate-700 dark:text-slate-300">
-              Votes: <span className="font-medium text-slate-900 dark:text-white">{up - down}</span>
+            <div className="text-sm text-muted-foreground">
+              Votes: <span className="font-medium text-foreground">{up - down}</span>
             </div>
           </div>
         </div>
 
-        <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        <Card className="border bg-card/60 backdrop-blur-sm shadow-sm">
           <CardContent className="p-4">
             <div className="space-y-3">
-              <div className="font-medium text-slate-800 dark:text-slate-100">Description</div>
-              <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+              <div className="font-medium">Description</div>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                 {issue.description}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        <Card className="border bg-card/60 backdrop-blur-sm shadow-sm">
           <CardContent className="p-4 space-y-3">
-            <div className="font-medium text-slate-800 dark:text-slate-100">
+            <div className="font-medium">
               Comments ({commentsTotal})
             </div>
             <div className="space-y-2">
               {comments.length === 0 ? (
-                <div className="text-sm text-slate-500 dark:text-slate-400">
+                <div className="text-sm text-muted-foreground">
                   No comments yet.
                 </div>
               ) : (
                 comments.map((c) => (
                   <div
                     key={c.id}
-                    className="rounded-md border border-slate-200 dark:border-slate-700 p-3 bg-white dark:bg-slate-700/40"
+                    className="rounded-lg border bg-muted/30 p-3"
                   >
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                    <div className="text-xs text-muted-foreground">
                       {c.userName} • {new Date(c.createdAt).toLocaleString()}
                     </div>
-                    <div className="text-sm text-slate-800 dark:text-slate-100">{c.text}</div>
+                    <div className="text-sm mt-1">{c.text}</div>
                   </div>
                 ))
               )}
             </div>
 
             {comments.length < commentsTotal && (
-              <Button size="sm" onClick={loadMore} disabled={loadingComments}>
+              <Button size="sm" variant="outline" onClick={loadMore} disabled={loadingComments}>
                 Load more
               </Button>
             )}
 
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-3">
               <Input
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Write a comment"
-                className="dark:bg-slate-900 dark:text-white"
+                className="bg-background"
               />
               <Button size="sm" onClick={submitComment} disabled={postingComment}>
                 Comment

@@ -66,37 +66,37 @@ export default function PublicPostsPage() {
       description="Browse recently reported civic issues. Filter by category and open any card for full detail and activity."
       maxWidth="6xl"
       className="bg-transparent"
-      sectionClassName="space-y-8"
+      sectionClassName="space-y-6"
       withDockSpacing
     >
       <Navbar />
-        <div className="flex flex-wrap items-center gap-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/70 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-800/50 px-5 py-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-4 rounded-xl border bg-card/60 backdrop-blur-sm px-5 py-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <span className="text-[13px] font-medium text-slate-700 dark:text-slate-200">Category:</span>
+            <span className="text-xs font-medium text-muted-foreground">Category:</span>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-48 h-9 bg-white dark:bg-slate-900/60 border-slate-300 dark:border-slate-600 text-sm focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 transition">
+              <SelectTrigger className="w-48 h-9 bg-background border-border text-sm">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent className="max-h-72">
                 {CATEGORY_LIST.map((c) => (
-                  <SelectItem key={c} value={c} className="text-[13px]">{c}</SelectItem>
+                  <SelectItem key={c} value={c} className="text-sm">{c}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[13px] font-medium text-slate-700 dark:text-slate-200">Sort:</span>
+            <span className="text-xs font-medium text-muted-foreground">Sort:</span>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40 h-9 bg-white dark:bg-slate-900/60 border-slate-300 dark:border-slate-600 text-sm focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 transition">
+              <SelectTrigger className="w-40 h-9 bg-background border-border text-sm">
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="newest" className="text-[13px]">Newest</SelectItem>
-                <SelectItem value="votes" className="text-[13px]">Most votes</SelectItem>
+                <SelectItem value="newest" className="text-sm">Newest</SelectItem>
+                <SelectItem value="votes" className="text-sm">Most votes</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="ml-auto text-[11px] text-slate-500 dark:text-slate-400">Showing {Math.min(visible, filtered.length)} of {filtered.length}</div>
+          <div className="ml-auto text-xs text-muted-foreground">Showing {Math.min(visible, filtered.length)} of {filtered.length}</div>
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.slice(0, visible).map((issue) => (
@@ -105,7 +105,7 @@ export default function PublicPostsPage() {
         </div>
         <div ref={sentinelRef} />
         {filtered.length === 0 && (
-          <div className="rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-100/60 dark:bg-neutral-800/40 p-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No issues found for this category.</div>
+          <div className="rounded-lg border border-dashed bg-muted/40 p-8 text-center text-sm text-muted-foreground">No issues found for this category.</div>
         )}
     </CitizenPageShell>
   )

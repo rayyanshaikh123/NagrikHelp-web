@@ -36,9 +36,10 @@ export default function CreateAdminForm() {
   }
 
   return (
-    <Card>
-      <CardContent className="p-4">
-        <form onSubmit={onSubmit} className="grid gap-3">
+    <Card className="border bg-card/60 backdrop-blur-sm">
+      <CardContent className="p-6">
+        <h3 className="text-lg font-medium mb-4">Create New Admin</h3>
+        <form onSubmit={onSubmit} className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Admin Name" />
@@ -55,7 +56,7 @@ export default function CreateAdminForm() {
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
           </div>
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
           <div className="flex justify-end">
             <Button type="submit" disabled={loading || !name || !email || !password}>
               {loading ? "Creating..." : "Create Admin"}

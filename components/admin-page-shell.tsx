@@ -25,13 +25,13 @@ export default function AdminPageShell({
 }: AdminPageShellProps) {
   const mwClass = maxWidth === 'full' ? 'max-w-none' : `max-w-${maxWidth}`
   return (
-    <main className={clsx('min-h-dvh bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors', className)}>
-      <section className={clsx('mx-auto px-6 py-8 space-y-10', mwClass, sectionClassName)}>
+    <main className={clsx('min-h-dvh bg-background transition-colors', className)}>
+      <section className={clsx('mx-auto px-6 py-8 space-y-8', mwClass, sectionClassName)}>
         {!hideHeader && (title || description || actions) && (
-          <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-3 max-w-prose">
-              {title && <h1 className="text-3xl font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-sky-500 to-cyan-400 dark:from-indigo-400 dark:via-sky-400 dark:to-cyan-300">{title}</h1>}
-              {description && <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{description}</p>}
+          <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-2 max-w-prose">
+              {title && <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">{title}</h1>}
+              {description && <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{description}</p>}
             </div>
             {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
           </header>

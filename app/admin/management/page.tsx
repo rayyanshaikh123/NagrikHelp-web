@@ -24,18 +24,24 @@ export default function AdminManagementPage() {
   const isSuper = backendRole === "SUPER_ADMIN"
 
   return (
-    <main className="min-h-dvh">
+    <main className="min-h-dvh bg-background">
       <Navbar />
       <div className="flex">
         <Sidebar role="admin" />
         <section className="flex-1 p-6 space-y-6">
-          <h1 className="text-2xl font-semibold">Admin Management</h1>
+          <div className="space-y-2">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Admin Management</h1>
+            <p className="text-sm text-muted-foreground">Manage administrator accounts and permissions.</p>
+          </div>
           {!isSuper ? (
-            <p className="text-sm text-muted-foreground">Only Super Admins can manage admins.</p>
+            <div className="rounded-xl border bg-card/60 backdrop-blur-sm p-6">
+              <p className="text-sm text-muted-foreground">Only Super Admins can manage admins.</p>
+            </div>
           ) : (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Create new admin accounts.</p>
-              <CreateAdminForm />
+              <div className="rounded-xl border bg-card/60 backdrop-blur-sm p-6">
+                <CreateAdminForm />
+              </div>
             </div>
           )}
         </section>

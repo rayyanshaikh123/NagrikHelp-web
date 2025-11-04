@@ -54,29 +54,29 @@ export function CitizenPageShell({
     <main
       id={id}
       className={clsx(
-        "min-h-dvh flex flex-col bg-gray-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100",
+        "min-h-dvh flex flex-col bg-background text-foreground",
         className
       )}
     >
       <section
         className={clsx(
-          `mx-auto max-w-${maxWidth} px-6`,
+          `mx-auto max-w-${maxWidth} w-full px-6`,
           compact ? 'py-6 space-y-6' : 'py-10 space-y-8',
-          withDockSpacing && 'pb-10 md:pb-12',
+          withDockSpacing && 'pb-20 md:pb-24',
           sectionClassName
         )}
       >
         {!hideHeader && (headerOverride || (
           (title || description || actions) && (
-            <header className={clsx("flex flex-col gap-4", actions && 'lg:flex-row lg:items-start lg:justify-between')}>              
-              <div className="space-y-3 max-w-prose">
+            <header className={clsx("flex flex-col gap-3", actions && 'lg:flex-row lg:items-start lg:justify-between')}>              
+              <div className="space-y-2 max-w-prose">
                 {title && (
-                  <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
                     {title}
                   </h1>
                 )}
                 {description && (
-                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                     {description}
                   </p>
                 )}

@@ -17,16 +17,16 @@ export default function CitizenMyIssuesPage() {
   const userId = useMemo(() => (typeof window !== 'undefined' ? localStorage.getItem('userId') || 'demo-user-1' : 'demo-user-1'), [])
   return (
     <CitizenPageShell
-      title={<span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400">My Issues</span>}
+      title="My Issues"
       description="Manage and monitor all the civic issues you have reported."
       maxWidth="7xl"
-      sectionClassName="pb-32 space-y-8"
+      sectionClassName="space-y-6"
       withDockSpacing
     >
       <Navbar />
-      <GlassPanel level={2} className="p-6">
+      <div className="rounded-xl border bg-card/60 backdrop-blur-sm p-6 shadow-sm">
         <CitizenMyIssues userId={userId} />
-      </GlassPanel>
+      </div>
     </CitizenPageShell>
   )
 }

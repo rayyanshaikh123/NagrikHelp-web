@@ -33,9 +33,9 @@ export default function CitizenCreateIssuePage() {
       withDockSpacing
     >
       <Navbar />
-      <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium text-slate-800 dark:text-slate-100">Submission Details</CardTitle>
+      <Card className="border bg-card/60 backdrop-blur-sm shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-medium">Submission Details</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <ReportIssueForm userId={userId} />

@@ -199,8 +199,8 @@ export default function IssueCard({
   }
 
   return (
-    <Card className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm transition hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 h-full">
-      <CardHeader className="pb-2 flex flex-row items-start justify-between gap-2">
+    <Card className="relative overflow-hidden rounded-xl border bg-card/60 backdrop-blur-sm shadow-sm transition-all duration-200 hover:shadow-md hover:border-foreground/20 h-full">
+      <CardHeader className="pb-3 flex flex-row items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           {mode === "citizen" ? (
             <CardTitle className="text-base font-semibold leading-snug">
@@ -213,7 +213,7 @@ export default function IssueCard({
           )}
         </div>
         {issue.shareToken ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <Button type="button" variant="outline" size="icon" className="h-7 w-7 shrink-0" onClick={() => setShareOpen(true)} title="Share">
               <span className="text-xs">↗</span>
             </Button>
@@ -241,7 +241,7 @@ export default function IssueCard({
                   toast({ title: isFollowing ? 'Unfollow failed' : 'Follow failed', description: e?.body?.message || e?.message || (isFollowing ? 'Unable to unfollow' : 'Unable to follow') })
                 }
               }}>
-                <Star className={`${isFollowing ? 'text-amber-400' : 'text-neutral-300'} h-4 w-4`} />
+                <Star className={`${isFollowing ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground'} h-4 w-4`} />
               </Button>
           </div>
         ) : null}

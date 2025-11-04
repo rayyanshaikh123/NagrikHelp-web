@@ -27,16 +27,16 @@ export default function AdminPage() {
   const filtered = filter === "all" ? issues : issues.filter(i => i.status === filter)
 
   return (
-    <main className="min-h-dvh">
+    <main className="min-h-dvh bg-background">
       <Navbar />
       <div className="flex">
         <Sidebar role="admin" />
-        <section className="flex-1 p-6 space-y-10">
+        <section className="flex-1 p-6 space-y-8">
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-900 p-4">
+            <div className="rounded-xl border bg-card/60 backdrop-blur-sm p-5">
               <h2 className="text-lg font-semibold tracking-tight">Admin Dashboard</h2>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">Moderate and track civic issues, update statuses, and view spatial distribution.</p>
-              <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/40">
+              <p className="text-xs text-muted-foreground mb-4">Moderate and track civic issues, update statuses, and view spatial distribution.</p>
+              <div className="rounded-lg overflow-hidden border bg-muted/40">
                 <AdminMap height={380} issues={filtered} />
               </div>
             </div>
@@ -59,10 +59,10 @@ function AdminIssues({ issues, filtered, onUpdate }: { issues: Issue[]; filtered
   async function handleUpdate(id: string, patch: Partial<Issue>) { await onUpdate(id, patch) }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <DashboardStats issues={issues} />
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/60 backdrop-blur px-4 py-2 text-sm">
-        <span className="text-slate-600 dark:text-slate-400">Filter:</span>
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card/60 backdrop-blur-sm px-4 py-3 text-sm">
+        <span className="text-muted-foreground">Filter:</span>
         <FilterLink label="All" count={counts.all} target="all" />
         <FilterLink label="Pending" count={counts.pending} target="pending" />
         <FilterLink label="In-Progress" count={counts["in-progress"]} target="in-progress" />
@@ -82,7 +82,7 @@ function FilterLink({ label, count, target }: { label: string; count: number; ta
   return (
     <a
       href={href}
-      className="px-2 py-1 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800/80 transition text-xs font-medium"
+      className="px-2 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition text-xs font-medium"
     >
       {label} <span className="opacity-60">({count})</span>
     </a>
