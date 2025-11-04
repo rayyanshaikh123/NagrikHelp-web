@@ -1,0 +1,7 @@
+[build]
+command = "pnpm build"
+publish = ".next"
+
+[build.environment]
+NETLIFY_USE_PNPM = "true"
+PNPM_FLAGS = "--no-frozen-lockfile"
