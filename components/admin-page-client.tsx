@@ -2,7 +2,7 @@
 
 import Navbar from "@/components/navbar"
 import Sidebar from "@/components/sidebar"
-import IssueCard from "@/components/issue-card"
+import IssueCard, { IssueCardSkeleton } from "@/components/issue-card"
 import DashboardStats from "@/components/dashboard-stats"
 import useSWR from "swr"
 import { getIssues, type Issue, updateIssue } from "@/services/issues"
@@ -41,14 +41,14 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
-          <AdminIssues issues={issues} filtered={filtered} onUpdate={async (id, patch) => { await updateIssue(id, patch); mutate() }} />
+          <AdminIssues loading={allIssues === undefined} issues={issues} filtered={filtered} onUpdate={async (id, patch) => { await updateIssue(id, patch); mutate() }} />
         </section>
       </div>
     </main>
   )
 }
 
-function AdminIssues({ issues, filtered, onUpdate }: { issues: Issue[]; filtered: Issue[]; onUpdate: (id: string, patch: Partial<Issue>) => Promise<void> }) {
+function AdminIssues({ loading, issues, filtered, onUpdate }: { loading: boolean; issues: Issue[]; filtered: Issue[]; onUpdate: (id: string, patch: Partial<Issue>) => Promise<void> }) {
   const counts = {
     all: issues.length,
     pending: issues.filter((i) => i.status === "pending").length,
@@ -69,9 +69,11 @@ function AdminIssues({ issues, filtered, onUpdate }: { issues: Issue[]; filtered
         <FilterLink label="Resolved" count={counts.resolved} target="resolved" />
       </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filtered.map((issue) => (
-          <IssueCard key={issue.id} issue={issue} mode="admin" onUpdate={handleUpdate} />
-        ))}
+        {loading
+          ? Array.from({ length: 8 }).map((_, i) => <IssueCardSkeleton key={i} />)
+          : filtered.map((issue) => (
+              <IssueCard key={issue.id} issue={issue} mode="admin" onUpdate={handleUpdate} />
+            ))}
       </div>
     </div>
   )

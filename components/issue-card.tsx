@@ -16,6 +16,7 @@ import { followIssueByShareToken, unfollowIssueByShareToken } from "@/services/i
 import { Star } from "lucide-react"
 import { useSWRConfig } from "swr"
 import dynamic from "next/dynamic"
+import { cn } from "@/lib/utils"
 
 const ShareIssueDialog = dynamic(() => import("./share-issue-dialog"), { ssr: false })
 import FollowModal from "./follow-modal"
@@ -198,6 +199,8 @@ export default function IssueCard({
     }
   }
 
+  const [imgLoaded, setImgLoaded] = useState(false)
+
   return (
     <Card className="relative overflow-hidden rounded-xl border bg-card/60 backdrop-blur-sm shadow-sm transition-all duration-200 hover:shadow-md hover:border-foreground/20 h-full">
       <CardHeader className="pb-3 flex flex-row items-start justify-between gap-2">
@@ -276,6 +279,8 @@ export default function IssueCard({
               alt={issue.title}
               className="w-full h-full object-cover"
               loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgLoaded(true)}
             />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
@@ -286,6 +291,9 @@ export default function IssueCard({
               loading="lazy"
             />
           )}
+          {(issue.imageBase64 || issue.photoUrl) && !imgLoaded ? (
+            <div className="absolute inset-0 bg-gradient-to-b from-muted/40 to-muted/20 animate-pulse" />
+          ) : null}
           {mode === "citizen" ? (
             <div className="absolute top-2 right-2 flex items-center gap-2 rounded-md bg-slate-900/85 dark:bg-slate-950/70 text-slate-50 px-2 py-1 border border-slate-600/70 backdrop-blur-sm text-[11px]">
               <button
@@ -392,6 +400,33 @@ export default function IssueCard({
           }
         }} />
       ) : null}
+    </Card>
+  )
+}
+
+export function IssueCardSkeleton() {
+  return (
+    <Card className="relative overflow-hidden rounded-xl border bg-card/60 backdrop-blur-sm shadow-sm h-full">
+      <CardHeader className="pb-3">
+        <div className="h-4 w-3/4 bg-muted rounded-md animate-pulse" />
+      </CardHeader>
+      <CardContent className="space-y-3 pt-0">
+        <div className="flex items-center gap-2">
+          <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+          <div className="h-5 w-20 rounded-full bg-muted animate-pulse" />
+        </div>
+        <div className="relative w-full h-36 overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
+          <div className="absolute inset-0 bg-muted animate-pulse" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-3 w-full bg-muted rounded animate-pulse" />
+          <div className="h-3 w-5/6 bg-muted rounded animate-pulse" />
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="h-3 w-24 bg-muted rounded animate-pulse" />
+          <div className="h-3 w-12 bg-muted rounded animate-pulse" />
+        </div>
+      </CardContent>
     </Card>
   )
 }

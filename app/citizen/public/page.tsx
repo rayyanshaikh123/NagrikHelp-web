@@ -6,7 +6,7 @@ import Navbar from "@/components/navbar"
 import CitizenPageShell from "@/components/citizen-page-shell"
 import useSWR from "swr"
 import { getPublicIssues, type Issue } from "@/services/issues"
-import IssueCard from "@/components/issue-card"
+import IssueCard, { IssueCardSkeleton } from "@/components/issue-card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const CATEGORY_LIST = [
@@ -99,9 +99,11 @@ export default function PublicPostsPage() {
           <div className="ml-auto text-xs text-muted-foreground">Showing {Math.min(visible, filtered.length)} of {filtered.length}</div>
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.slice(0, visible).map((issue) => (
-            <IssueCard key={issue.id} issue={issue} mode="citizen" />
-          ))}
+          {data === undefined
+            ? Array.from({ length: 6 }).map((_, i) => <IssueCardSkeleton key={i} />)
+            : filtered.slice(0, visible).map((issue) => (
+                <IssueCard key={issue.id} issue={issue} mode="citizen" />
+              ))}
         </div>
         <div ref={sentinelRef} />
         {filtered.length === 0 && (
