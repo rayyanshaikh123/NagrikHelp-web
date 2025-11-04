@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
-import { useHeroToast } from "@/hooks/use-hero-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useSWRConfig } from "swr"
 import { createIssue, type Issue, type IssueCategory } from "@/services/issues"
 import { Label } from "@/components/ui/label"
@@ -60,7 +60,7 @@ export default function ReportIssueForm({ userId }: { userId: string }) {
   const [comments, setComments] = useState<{ by: string; text: string; at: number }[]>([])
   const commentInput = useRef<HTMLInputElement | null>(null)
 
-  const { success, error, warning, info } = useHeroToast()
+  const { toast } = useToast()
   const { mutate } = useSWRConfig()
   const router = useRouter()
 
@@ -71,17 +71,20 @@ export default function ReportIssueForm({ userId }: { userId: string }) {
   const toLocString = (p: [number, number], addr?: string) => (addr ? `${p[0].toFixed(6)},${p[1].toFixed(6)} | ${addr}` : `${p[0].toFixed(6)},${p[1].toFixed(6)}`)
 
   const useMyLocation = useCallback(() => {
-    if (!navigator.geolocation) return warning("Location not available")
+    if (!navigator.geolocation) {
+      toast({ title: "Location not available" })
+      return
+    }
     navigator.geolocation.getCurrentPosition(
       (res) => {
         const p: [number, number] = [res.coords.latitude, res.coords.longitude]
         setPos(p)
         setLocation(toLocString(p))
       },
-      () => warning("Unable to get current location"),
+      () => toast({ title: "Unable to get current location" }),
       { enableHighAccuracy: true, timeout: 8000 },
     )
-  }, [warning])
+  }, [toast])
 
   const [query, setQuery] = useState("")
   const [suggestions, setSuggestions] = useState<Array<{ display_name: string; lat: string; lon: string }>>([])
@@ -123,7 +126,10 @@ export default function ReportIssueForm({ userId }: { userId: string }) {
       const url = `https://nominatim.openstreetmap.org/search?format=json&limit=10&q=${encodeURIComponent(query)}`
       const res = await fetch(url, { headers: { "Accept-Language": "en" } })
       const data: any[] = await res.json()
-  if (!data.length) return info("No results found")
+      if (!data.length) {
+        toast({ title: "No results found" })
+        return
+      }
       const mapped = data.map((d) => ({ display_name: d.display_name, lat: d.lat, lon: d.lon }))
       setSuggestions(mapped)
       if (mapped.length === 1) {
@@ -134,12 +140,15 @@ export default function ReportIssueForm({ userId }: { userId: string }) {
         setLocation(`${p[0].toFixed(6)},${p[1].toFixed(6)} | ${single.display_name}`)
         setSuggestions([])
       } else {
-        info("Select a location", `Showing ${mapped.length} suggestions`)
+        toast({
+          title: "Select a location",
+          description: `Showing ${mapped.length} suggestions`
+        })
       }
     } catch (e) {
-      error("Search failed")
+      toast({ title: "Search failed", variant: "destructive" })
     }
-  }, [query, info, error])
+  }, [query, toast])
 
   const aiBlock = useMemo(() => {
     // If user attached an image and AI says low confidence (isValid=false), block submission
@@ -149,7 +158,11 @@ export default function ReportIssueForm({ userId }: { userId: string }) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (aiBlock) {
-      warning('Low-confidence photo', 'Please upload a clearer image or try a different photo before submitting.')
+      toast({
+        title: 'Low-confidence photo',
+        description: 'Please upload a clearer image or try a different photo before submitting.',
+        variant: 'destructive'
+      })
       return
     }
     setSubmitting(true)
@@ -158,12 +171,19 @@ export default function ReportIssueForm({ userId }: { userId: string }) {
       // Optimistically refresh lists
       mutate(["public-issues"])
       mutate(["my-issues", userId])
-  success("Issue reported", "Redirecting to issue...")
+      toast({
+        title: "Issue reported",
+        description: "Redirecting to issue..."
+      })
       // Redirect to public issue detail page
       router.push(`/citizen/public/${issue.id}`)
       return
     } catch (err: any) {
-      error("Create failed", err?.message || "Unable to create issue")
+      toast({
+        title: "Create failed",
+        description: err?.message || "Unable to create issue",
+        variant: "destructive"
+      })
     } finally {
       setSubmitting(false)
     }

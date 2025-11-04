@@ -8,7 +8,7 @@ import { logout as authLogout, getAuthToken } from "@/services/auth"
 import { Bell, Menu } from "lucide-react"
 import { NotificationsDialog } from "@/components/notifications-dialog"
 import { fetchUnreadCount } from "@/services/notifications"
-import { useHeroToast } from "@/hooks/use-hero-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useNotificationStream } from "@/hooks/use-notification-stream"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
@@ -19,7 +19,7 @@ export default function Navbar() {
   const [backendRole, setBackendRole] = useState<string | null>(null)
   const [notifOpen, setNotifOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
-  const { info } = useHeroToast()
+  const { toast } = useToast()
 
   useEffect(() => {
     setRole(localStorage.getItem("role"))
@@ -36,7 +36,10 @@ export default function Navbar() {
     getToken: () => getAuthToken(),
     onNotification: (n) => {
       setUnreadCount(c => c + 1)
-      info('New notification', n.message)
+      toast({
+        title: 'New notification',
+        description: n.message
+      })
     },
     onStatusChange: ({ live }) => {
       if (live) {
@@ -140,7 +143,10 @@ export default function Navbar() {
                   authLogout()
                   try { localStorage.removeItem("userId") } catch {}
                   // Show a toast and navigate client-side so the toast remains visible
-                  info('Logged out', 'See you soon!')
+                  toast({
+                    title: 'Logged out',
+                    description: 'See you soon!'
+                  })
                   router.replace('/')
                 }}
               >

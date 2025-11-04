@@ -23,7 +23,7 @@ import {
   Cell,
   Legend,
 } from "recharts"
-import { useHeroToast } from "@/hooks/use-hero-toast"
+import { useToast } from "@/hooks/use-toast"
 
 export default function ReportsPage() {
   const router = useRouter()
@@ -80,7 +80,7 @@ function ReportsContent() {
   const [loadingReport, setLoadingReport] = useState(false)
   const [reportMonth, setReportMonth] = useState(now.getMonth() + 1) // 1-12
   const [reportYear, setReportYear] = useState(now.getFullYear())
-  const { success, error, info } = useHeroToast()
+    const { toast } = useToast()
 
   async function generateReport() {
     try {
@@ -89,10 +89,17 @@ function ReportsContent() {
       setReport(r)
       // Auto trigger PDF download after successful generation
       await downloadMonthlyResolvedPdf(reportYear, reportMonth)
-      success("Report generated", `Total resolved: ${r.totalResolved}. Downloading PDF…`)
+        toast({
+          title: "Report generated",
+          description: `Total resolved: ${r.totalResolved}. Downloading PDF…`
+        })
     } catch (e) {
       console.error(e)
-      error("Report generation failed", (e as any)?.message || "Unable to generate report")
+        toast({
+          title: "Report generation failed",
+          description: (e as any)?.message || "Unable to generate report",
+          variant: "destructive"
+        })
     } finally {
       setLoadingReport(false)
     }
@@ -102,10 +109,14 @@ function ReportsContent() {
     try {
       setLoadingReport(true)
       await downloadMonthlyResolvedPdf(reportYear, reportMonth)
-      info("Downloading PDF…")
+        toast({ title: "Downloading PDF…" })
     } catch (e) {
       console.error(e)
-      error("Download failed", (e as any)?.message || "Unable to download PDF")
+        toast({
+          title: "Download failed",
+          description: (e as any)?.message || "Unable to download PDF",
+          variant: "destructive"
+        })
     } finally {
       setLoadingReport(false)
     }

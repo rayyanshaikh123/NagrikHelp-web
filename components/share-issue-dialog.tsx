@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { useHeroToast } from "@/hooks/use-hero-toast"
+import { useToast } from "@/hooks/use-toast"
 import type { Issue } from "@/services/issues"
 // Replace fragile brand icon imports with stable generic icons
 import { Share2, Link as LinkIcon, Mail, Phone, Globe, MessageCircle, Send, Copy } from "lucide-react"
@@ -12,7 +12,7 @@ import { Share2, Link as LinkIcon, Mail, Phone, Globe, MessageCircle, Send, Copy
 interface Props { issue: Issue; open: boolean; onOpenChange: (v: boolean) => void }
 
 export default function ShareIssueDialog({ issue, open, onOpenChange }: Props) {
-  const { success, error } = useHeroToast()
+  const { toast } = useToast()
   const [link, setLink] = useState("")
 
   useEffect(() => {
@@ -25,7 +25,12 @@ export default function ShareIssueDialog({ issue, open, onOpenChange }: Props) {
 
   async function copy() {
     if (!link) return
-    try { await navigator.clipboard.writeText(link); success("Link copied") } catch { error("Copy failed") }
+    try {
+      await navigator.clipboard.writeText(link)
+      toast({ title: "Link copied" })
+    } catch {
+      toast({ title: "Copy failed", variant: "destructive" })
+    }
   }
 
   function systemShare() {
