@@ -8,8 +8,11 @@ import CitizenPageShell from '@/components/citizen-page-shell'
 
 export default function CitizenCreateIssuePage() {
   const router = useRouter()
-  const [userId, setUserId] = useState('')
+  const [userId, setUserId] = useState('demo-user-1')
+  const [mounted, setMounted] = useState(false)
+  
   useEffect(() => {
+    setMounted(true)
     if (typeof window === 'undefined') return
     const token = localStorage.getItem('authToken')
     const role = localStorage.getItem('role')
@@ -23,6 +26,11 @@ export default function CitizenCreateIssuePage() {
     }
     setUserId(localStorage.getItem('userId') || 'demo-user-1')
   }, [router])
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return null
+  }
 
   return (
     <CitizenPageShell

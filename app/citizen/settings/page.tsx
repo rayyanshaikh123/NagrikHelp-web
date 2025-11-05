@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/navbar'
 import GlassPanel from '@/components/glass-panel'
@@ -13,7 +13,11 @@ export default function CitizenSettingsPage() {
   const router = useRouter()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [userId, setUserId] = useState('demo-user-1')
+  const [mounted, setMounted] = useState(false)
+  
   useEffect(()=>{
+    setMounted(true)
     const token = localStorage.getItem('authToken')
     const role = localStorage.getItem('role')
     if(!token || !role) router.replace('/login')
@@ -21,9 +25,10 @@ export default function CitizenSettingsPage() {
     try {
       setName(localStorage.getItem('name') || '')
       setEmail(localStorage.getItem('email') || '')
+      setUserId(localStorage.getItem('userId') || 'demo-user-1')
     } catch {}
   }, [router])
-  const userId = useMemo(() => (typeof window !== 'undefined' ? localStorage.getItem('userId') || 'demo-user-1' : 'demo-user-1'), [])
+  
   const { toast } = useToast()
 
   async function deleteAccount() {
@@ -67,6 +72,11 @@ export default function CitizenSettingsPage() {
         variant: 'destructive'
       })
     }
+  }
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return null
   }
 
   return (
