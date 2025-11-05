@@ -9,28 +9,18 @@ function stripDataUrl(dataUrl: string) {
   return { base64 }
 }
 
-function mapLabelsToCategory(labels: Array<{ label: string; score: number }>) {
-  // Simple heuristic mapping
-  const top = labels[0]
-  let category = 'Other'
-  if (!top) return { category, confidence: 0 }
-  if (top.label.toLowerCase().includes('leaf')) category = 'Leaf'
-  else if (top.label.toLowerCase().includes('disease')) category = 'Disease'
-  else if (top.label.toLowerCase().includes('plant')) category = 'Plant'
-  else category = 'General'
-  return { category, confidence: top.score }
+// Map AI categories to our IssueCategory types
+function mapAiCategoryToIssueCategory(aiCategory: string): string {
+  const mapping: Record<string, string> = {
+    'POTHOLE': 'POTHOLE',
+    'GARBAGE': 'GARBAGE',
+    'STREETLIGHT': 'STREETLIGHT',
+    'WATER': 'WATER',
+    'ELECTRICITY': 'OTHER',
+    'OTHER': 'OTHER'
+  }
+  return mapping[aiCategory] || 'OTHER'
 }
-
-// Note: We will read env values inside the handler where needed so changes take effect after restart.
-
-const CANDIDATE_MODELS = [
-  process.env.CIVIC_VISION_MODEL?.trim() || 'google/vit-base-patch16-224',
-  'facebook/convnextv2-base-22k-224',
-  'microsoft/resnet-50',
-  'microsoft/resnet-34',
-]
-
-const TEXT_MODEL = process.env.CIVIC_TEXT_MODEL?.trim() || 'distilbert-base-uncased'
 
 export async function POST(req: NextRequest) {
   const start = Date.now()
@@ -58,18 +48,79 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify(cacheHit.data), { status: 200 })
     }
 
-    let labels: Array<{ label: string; score: number }> = []
     let success = false
     const attempts: any[] = []
-  // Effective HF key used for hosted inference. May be overridden for dev via header when enabled.
-  // Use globalThis access to avoid TypeScript "process" resolution issues in some environments.
-  let EFFECTIVE_HF_KEY = (globalThis as any).process?.env?.HUGGING_FACE_API_KEY
+    let finalResult: any = null
 
-    // 1) Try local vision server first if configured
-  const LOCAL_URL = ((globalThis as any).process?.env?.LOCAL_VISION_URL as string | undefined)?.trim()
-  // Allow configuring the local server timeout (ms). Default to 30s to accommodate free-hosted cold starts.
-  const LOCAL_TIMEOUT_MS = Number((globalThis as any).process?.env?.LOCAL_VISION_TIMEOUT_MS) || 30000
+    // Use globalThis to access environment variables
+    const LOCAL_URL = ((globalThis as any).process?.env?.LOCAL_VISION_URL as string | undefined)?.trim()
+    const LOCAL_TIMEOUT_MS = Number((globalThis as any).process?.env?.LOCAL_VISION_TIMEOUT_MS) || 30000
+    
+    // 1) Try local vision server's /validate endpoint (new multi-model pipeline)
     if (LOCAL_URL && LOCAL_URL.length > 0) {
+      const t0 = Date.now()
+      try {
+        const ac = new AbortController()
+        const to = setTimeout(() => ac.abort(), LOCAL_TIMEOUT_MS)
+        
+        const resp = await fetch(`${LOCAL_URL.replace(/\/$/, '')}/validate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            image: body.imageBase64,
+            description: body.description || ''
+          }),
+          signal: ac.signal,
+        })
+        
+        clearTimeout(to)
+        
+        if (resp.ok) {
+          const data = await resp.json()
+          
+          // Transform response to match frontend expectations
+          const mappedCategory = mapAiCategoryToIssueCategory(data.category)
+          
+          finalResult = {
+            isValid: data.isIssue,
+            suggestedCategory: mappedCategory,
+            confidence: data.confidence,
+            message: data.message,
+            rawLabels: data.rawLabels || [],
+            latencyMs: Date.now() - start,
+            bbox: data.bbox,
+            modelUsed: data.modelUsed,
+            debug: data.debug
+          }
+          
+          success = true
+          attempts.push({ 
+            source: 'local-validation-server', 
+            ok: true, 
+            ms: Date.now() - t0, 
+            status: resp.status 
+          })
+        } else {
+          const text = await resp.text()
+          attempts.push({ 
+            source: 'local-validation-server', 
+            ok: false, 
+            ms: Date.now() - t0, 
+            status: resp.status, 
+            error: text.slice(0, 140) 
+          })
+        }
+      } catch (e: any) {
+        attempts.push({ 
+          source: 'local-validation-server', 
+          ok: false, 
+          error: e?.name === 'AbortError' ? 'timeout' : (e?.message || 'error') 
+        })
+      }
+    }
+
+    // 2) Fallback: Try legacy /classify endpoint if /validate failed
+    if (!success && LOCAL_URL && LOCAL_URL.length > 0) {
       const t0 = Date.now()
       try {
         const ac = new AbortController()
@@ -81,136 +132,49 @@ export async function POST(req: NextRequest) {
           signal: ac.signal,
         })
         clearTimeout(to)
+        
         if (resp.ok) {
           const data = await resp.json()
           if (Array.isArray(data)) {
-            labels = data.map((r: any) => ({ label: String(r.label), score: Number(r.score) }))
+            const labels = data.map((r: any) => ({ label: String(r.label), score: Number(r.score) }))
+            const { category, confidence } = mapLegacyLabelsToCategory(labels)
+            
+            finalResult = {
+              isValid: confidence > 0.3,
+              suggestedCategory: category,
+              confidence: confidence,
+              message: confidence > 0.3 ? `Detected possible ${category.toLowerCase()} issue.` : 'Low confidence detection.',
+              rawLabels: labels.slice(0, 6),
+              latencyMs: Date.now() - start,
+            }
+            
             success = true
-            attempts.push({ source: 'local-server', ok: true, ms: Date.now() - t0, status: resp.status })
-          } else if (Array.isArray((data as any)?.[0])) {
-            const arr = (data as any)[0]
-            labels = arr.map((r: any) => ({ label: String(r.label), score: Number(r.score) }))
-            success = true
-            attempts.push({ source: 'local-server', ok: true, ms: Date.now() - t0, status: resp.status })
-          } else {
-            attempts.push({ source: 'local-server', ok: false, ms: Date.now() - t0, status: resp.status, note: 'Unexpected JSON' })
+            attempts.push({ source: 'local-classify-server', ok: true, ms: Date.now() - t0, status: resp.status })
           }
         } else {
           const text = await resp.text()
-          attempts.push({ source: 'local-server', ok: false, ms: Date.now() - t0, status: resp.status, error: text.slice(0, 140) })
+          attempts.push({ source: 'local-classify-server', ok: false, ms: Date.now() - t0, status: resp.status, error: text.slice(0, 140) })
         }
       } catch (e: any) {
-        attempts.push({ source: 'local-server', ok: false, error: e?.name === 'AbortError' ? 'timeout' : (e?.message || 'error') })
+        attempts.push({ source: 'local-classify-server', ok: false, error: e?.name === 'AbortError' ? 'timeout' : (e?.message || 'error') })
       }
     }
 
-    // 2) If local failed or not configured, try hosted models via HF
     if (!success) {
-      // Allow an optional request header to provide an HF key for local/dev testing when explicitly enabled.
-      // Enable by setting ALLOW_HF_HEADER=true in your environment (use with caution).
-      const headerHfKey = req.headers.get('x-hf-api-key')?.trim()
-  EFFECTIVE_HF_KEY = headerHfKey && (globalThis as any).process?.env?.ALLOW_HF_HEADER === 'true' ? headerHfKey : (globalThis as any).process?.env?.HUGGING_FACE_API_KEY
-      if (!EFFECTIVE_HF_KEY) {
-        // Log attempts to server logs to aid debugging (will include local-server attempt details)
-        console.error('🧭 Classification attempts before failing:', JSON.stringify(attempts, null, 2))
-        // No key and no local success: return clearly
-        return new Response(JSON.stringify({ error: 'HUGGING_FACE_API_KEY missing and local server not available', attempts }), { status: 401 })
-      }
+      console.error('🧭 All classification attempts failed:', JSON.stringify(attempts, null, 2))
+      return new Response(
+        JSON.stringify({ 
+          error: 'Local AI server not available. Please ensure the AI server is running.',
+          attempts 
+        }), 
+        { status: 503 }
+      )
     }
 
-    for (const model of CANDIDATE_MODELS) {
-      const t0 = Date.now()
-      try {
-        const resp = await fetch(
-          `https://api-inference.huggingface.co/models/${encodeURIComponent(model)}?wait_for_model=true`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${EFFECTIVE_HF_KEY}`,
-              'Content-Type': 'application/octet-stream',
-              Accept: 'application/json',
-              'User-Agent': 'NextJS-AI-Classifier/1.0',
-            },
-            body: imageBuf,
-          }
-        )
+    // Cache result for 10 minutes
+    cache.set(hash, { data: finalResult, expires: Date.now() + 10 * 60 * 1000 })
 
-        if (resp.status === 503) {
-          attempts.push({ model, ok: false, status: 503, note: 'Model loading...' })
-          continue
-        }
-
-        const data = await resp.json()
-        if (Array.isArray(data)) {
-          labels = data.map((r: any) => ({ label: r.label, score: r.score }))
-          success = true
-          attempts.push({ model, ok: true, ms: Date.now() - t0 })
-          break
-        } else if (Array.isArray(data[0])) {
-          labels = data[0].map((r: any) => ({ label: r.label, score: r.score }))
-          success = true
-          attempts.push({ model, ok: true, ms: Date.now() - t0 })
-          break
-        } else {
-          attempts.push({
-            model,
-            ok: false,
-            status: resp.status,
-            note: JSON.stringify(data).slice(0, 120),
-          })
-        }
-      } catch (e: any) {
-        attempts.push({ model, ok: false, error: e.message })
-      }
-    }
-
-    if (!success || !labels.length) {
-      return new Response(JSON.stringify({ error: 'All models failed', attempts }), { status: 503 })
-    }
-
-    const { category, confidence } = mapLabelsToCategory(labels)
-
-    // Optional reasoning with text model
-    let reasoning = ''
-    try {
-      const textResp = EFFECTIVE_HF_KEY ? await fetch(`https://api-inference.huggingface.co/models/${TEXT_MODEL}`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${EFFECTIVE_HF_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inputs: `This image likely shows a ${category}. What might this mean in a general context?`,
-        }),
-      }) : null
-      if (textResp) {
-        const textData = await textResp.json()
-        reasoning = textData?.[0]?.generated_text || 'No reasoning available.'
-      } else {
-        reasoning = 'Reasoning model unavailable.'
-      }
-    } catch (err) {
-      reasoning = 'Reasoning model unavailable.'
-    }
-
-    const result = {
-      isValid: confidence > 0.25,
-      suggestedCategory: category,
-      confidence: Number(confidence.toFixed(3)),
-      message:
-        confidence > 0.25
-          ? `Detected possible ${category.toLowerCase()} issue.`
-          : 'Low confidence detection.',
-      reasoning,
-      rawLabels: labels.slice(0, 6),
-      latencyMs: Date.now() - start,
-      attempts,
-    }
-
-    // Cache it for 10 minutes
-    cache.set(hash, { data: result, expires: Date.now() + 10 * 60 * 1000 })
-
-    return new Response(JSON.stringify(result), {
+    return new Response(JSON.stringify(finalResult), {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     })
@@ -218,4 +182,32 @@ export async function POST(req: NextRequest) {
     console.error('❌ Classification Error:', err)
     return new Response(JSON.stringify({ error: err.message || 'Server Error' }), { status: 500 })
   }
+}
+
+// Legacy label mapping for fallback classifier
+function mapLegacyLabelsToCategory(labels: Array<{ label: string; score: number }>) {
+  const categoryKeywords: Record<string, string[]> = {
+    POTHOLE: ["pothole", "road", "asphalt", "pavement", "crack", "street"],
+    GARBAGE: ["garbage", "trash", "litter", "waste", "dump", "rubbish", "debris", "plastic"],
+    STREETLIGHT: ["streetlight", "lamp", "light pole", "lighting", "bulb"],
+    WATER: ["water", "leak", "pipe", "flood", "sewage", "drain", "puddle"],
+    OTHER: ["road", "street", "outdoor", "building", "urban", "city"]
+  }
+
+  const scores: Record<string, number> = { POTHOLE: 0, GARBAGE: 0, STREETLIGHT: 0, WATER: 0, OTHER: 0 }
+
+  for (const item of labels) {
+    const labelLower = item.label.toLowerCase()
+    for (const [category, keywords] of Object.entries(categoryKeywords)) {
+      for (const keyword of keywords) {
+        if (labelLower.includes(keyword)) {
+          scores[category] += item.score
+          break
+        }
+      }
+    }
+  }
+
+  const best = Object.entries(scores).reduce((a, b) => b[1] > a[1] ? b : a)
+  return { category: best[0], confidence: Math.min(best[1], 1.0) }
 }

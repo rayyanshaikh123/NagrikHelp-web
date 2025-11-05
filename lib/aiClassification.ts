@@ -19,22 +19,26 @@ export interface AiIssueClassification {
   rawLabels?: Array<{ label: string; score: number }>
   reasoning?: string
   latencyMs?: number
+  bbox?: number[] | null // Bounding box [x1, y1, x2, y2] from YOLO
+  modelUsed?: string // Which model(s) were used
+  debug?: any // Debug information from multi-model pipeline
 }
 
 export interface AiIssueRequestPayload {
   imageBase64: string // data URL or raw base64
   // Optionally allow passing a user hint (like description or chosen category) to refine reasoning
   hintText?: string
+  description?: string
 }
 
 // Lightweight mapping from generic model labels to our IssueCategory domain.
 // Model labels from common vision models like ViT/ResNet (imagenet labels etc.) will be noisy;
 // we perform a heuristic mapping. For production, replace with a fine-tuned classifier.
 const KEYWORD_CATEGORY_MAP: Array<{ kw: RegExp; cat: IssueCategory }> = [
-  { kw: /pothole|asphalt|road|street.*hole/i, cat: "POTHOLE" },
-  { kw: /garbage|trash|litter|waste|dump|rubbish|debris/i, cat: "GARBAGE" },
-  { kw: /lamp|street.?light|light pole|lighting/i, cat: "STREETLIGHT" },
-  { kw: /water|leak|pipe|flood|sewage|drain/i, cat: "WATER" },
+  { kw: /pothole|asphalt|road|street.*hole|pavement.*damage/i, cat: "POTHOLE" },
+  { kw: /garbage|trash|litter|waste|dump|rubbish|debris|plastic.*bag/i, cat: "GARBAGE" },
+  { kw: /lamp|street.?light|light pole|lighting|bulb/i, cat: "STREETLIGHT" },
+  { kw: /water|leak|pipe|flood|sewage|drain|waterlog/i, cat: "WATER" },
 ]
 
 export function mapLabelsToCategory(labels: Array<{ label: string; score: number }>): { category: IssueCategory; confidence: number } {
