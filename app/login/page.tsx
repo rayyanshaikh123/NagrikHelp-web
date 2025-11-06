@@ -1,19 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { login as loginApi, persistAuth, mapRoleToFrontend } from "@/services/auth"
+import * as authService from "@/services/auth"
+import { useToast } from "@/hooks/use-toast"
+// use auth.googleSignIn below
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const googleButtonRef = useRef<HTMLDivElement | null>(null)
+  const [emailConsent] = useState(true)
+  const [smsConsent] = useState(false)
+  const { toast } = useToast()
   const router = useRouter()
 
   async function onSubmit() {
@@ -32,15 +38,15 @@ export default function LoginPage() {
         setLoading(false)
         return
       }
-      const auth = await loginApi({ email, password })
-      // Validate response shape
-      if (!auth || !auth.token) {
+      const authResp = await authService.login({ email, password })
+      if (!authResp || !authResp.token) {
         setError('Login failed: invalid credentials or user does not exist.')
         setLoading(false)
         return
       }
-      persistAuth(auth)
-      const role = mapRoleToFrontend(auth.role)
+      authService.persistAuth(authResp)
+      toast({ title: "Signed in", description: `Welcome back, ${authResp.name}` })
+      const role = authService.mapRoleToFrontend(authResp.role)
       router.replace(role === "admin" ? "/admin" : "/citizen/public")
     } catch (e: any) {
       // Handle common API error statuses if available
@@ -50,11 +56,47 @@ export default function LoginPage() {
         setError('User not found.')
       } else {
         setError(e?.message || "Login failed")
+        toast({ title: "Sign in failed", description: e?.message || "Invalid credentials", variant: "destructive" })
       }
     } finally {
       setLoading(false)
     }
   }
+
+  // (OTP/resend flows removed — reverting to single-step login behavior)
+
+  useEffect(() => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+  if (!clientId) return
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.onload = () => {
+      // @ts-ignore
+      if (window.google && googleButtonRef.current) {
+        // @ts-ignore
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (resp: any) => {
+            try {
+              const authResp = await authService.googleSignIn({ idToken: resp.credential, emailConsent, smsConsent })
+              authService.persistAuth(authResp)
+              toast({ title: 'Signed in with Google', description: `Welcome ${authResp.name}` })
+              const role = authService.mapRoleToFrontend(authResp.role)
+              router.replace(role === 'admin' ? '/admin' : '/citizen/public')
+            } catch (err: any) {
+              setError(err?.message || 'Google sign-in failed')
+              toast({ title: 'Google sign-in failed', description: err?.message || 'Unable to sign in', variant: 'destructive' })
+            }
+          }
+        })
+        // @ts-ignore
+        window.google.accounts.id.renderButton(googleButtonRef.current, { theme: 'outline', size: 'large' })
+      }
+    }
+    document.head.appendChild(script)
+    return () => { document.head.removeChild(script) }
+  }, [router, emailConsent, smsConsent])
 
   return (
     <main className="min-h-dvh flex items-center justify-center p-6">
@@ -79,6 +121,7 @@ export default function LoginPage() {
                 <Button onClick={onSubmit} disabled={loading || !email || !password}>
                   {loading ? "Signing in..." : "Sign in"}
                 </Button>
+                <div ref={googleButtonRef} className="mt-2" />
                 <p className="text-xs text-muted-foreground">
                   Don&apos;t have an account? <Link className="underline underline-offset-2" href="/register">Register</Link>
                 </p>

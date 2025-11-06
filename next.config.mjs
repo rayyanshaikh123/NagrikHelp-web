@@ -9,6 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // COOP header is handled dynamically in `middleware.ts` so we don't set it statically here.
 }
 
 export default nextConfig
