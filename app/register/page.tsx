@@ -23,9 +23,6 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [phone, setPhone] = useState("")
   const [emailConsent, setEmailConsent] = useState(true)
-  const [smsConsent, setSmsConsent] = useState(false)
-  const [otpNeeded, setOtpNeeded] = useState(false)
-  const [otpCode, setOtpCode] = useState("")
   const googleButtonRef = useRef<HTMLDivElement | null>(null)
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -38,18 +35,12 @@ export default function RegisterPage() {
     setError(null)
     setLoading(true)
     try {
-  const resp = await authService.register({ name, email, password, phone: phone || undefined, emailConsent, smsConsent })
+  const resp = await authService.register({ name, email, password, phone: phone || undefined, emailConsent })
   authService.persistAuth(resp)
       // persist phone locally so profile can display it
       try { if (phone && phone.trim().length > 0) localStorage.setItem('phone', phone) } catch {}
   toast({ title: "Account created", description: `Welcome ${resp.name}` })
-      // If SMS consent requested and phone was provided, show OTP input
-      if (smsConsent && phone && phone.trim().length > 0) {
-        setOtpNeeded(true)
-        toast({ title: "OTP sent", description: `A verification code was sent to ${phone}` })
-        // user should receive OTP from backend
-        return
-      }
+      // SMS/OTP flow removed — proceed to app
   const role = authService.mapRoleToFrontend(resp.role)
     router.replace(role === "admin" ? "/admin" : "/citizen")
     } catch (e: any) {
@@ -59,34 +50,7 @@ export default function RegisterPage() {
     }
   }
 
-  async function onVerifyOtp() {
-    setError(null)
-    try {
-  await authService.verifyPhone({ phone, code: otpCode })
-      toast({ title: "Phone verified", description: "Your phone number has been verified." })
-      router.replace("/citizen")
-    } catch (e: any) {
-      setError(e?.message || "OTP verify failed")
-      toast({ title: "OTP verification failed", description: e?.message || "Invalid code", variant: "destructive" })
-    }
-  }
-
-  async function onResendOtp() {
-    setError(null)
-    try {
-  const resp: any = await authService.resendOtp({ phone })
-      if (resp && resp.ok === false && resp.retryAfter) {
-        const seconds = Number(resp.retryAfter) || 60
-        setResendCooldown(seconds)
-        toast({ title: "Too many requests", description: `Please wait ${seconds}s before retrying`, variant: "destructive" })
-        return
-      }
-      toast({ title: "OTP resent", description: `A new code was sent to ${phone}` })
-    } catch (e: any) {
-      setError(e?.message || "Resend failed")
-      toast({ title: "Resend failed", description: e?.message || "Unable to resend code", variant: "destructive" })
-    }
-  }
+  // OTP/resend UI removed — SMS flows disabled
 
   // countdown effect for resend cooldown
   useEffect(() => {
@@ -133,9 +97,9 @@ export default function RegisterPage() {
         // @ts-ignore
         window.google.accounts.id.initialize({
           client_id: clientId,
-          callback: async (resp: any) => {
+            callback: async (resp: any) => {
             try {
-              const authResp = await authService.googleSignIn({ idToken: resp.credential, emailConsent, smsConsent, phone: phone || undefined })
+              const authResp = await authService.googleSignIn({ idToken: resp.credential, emailConsent, phone: phone || undefined })
               authService.persistAuth(authResp)
               try { if (phone && phone.trim().length > 0) localStorage.setItem('phone', phone) } catch {}
               toast({ title: 'Signed in with Google', description: `Welcome ${authResp.name}` })
@@ -153,7 +117,7 @@ export default function RegisterPage() {
     }
     document.head.appendChild(script)
     return () => { document.head.removeChild(script) }
-  }, [emailConsent, smsConsent, phone, router])
+  }, [emailConsent, phone, router])
 
   return (
     <main className="min-h-dvh grid place-items-center p-6">
@@ -182,10 +146,6 @@ export default function RegisterPage() {
                 <input type="checkbox" checked={emailConsent} onChange={(e) => setEmailConsent(e.target.checked)} />
                 <span className="text-sm">Allow email notifications</span>
               </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={smsConsent} onChange={(e) => setSmsConsent(e.target.checked)} />
-                <span className="text-sm">Allow SMS notifications</span>
-              </label>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
@@ -196,18 +156,7 @@ export default function RegisterPage() {
               {loading ? "Creating account..." : "Create account"}
             </Button>
             <div ref={googleButtonRef} />
-            {otpNeeded ? (
-              <div className="mt-4">
-                <Label htmlFor="otp">Enter OTP sent to {phone}</Label>
-                <Input id="otp" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} placeholder="123456" />
-                <div className="flex gap-2 mt-2">
-                  <Button onClick={onVerifyOtp}>Verify phone</Button>
-                  <Button variant="outline" onClick={onResendOtp} disabled={resendCooldown > 0}>
-                    {resendCooldown > 0 ? `Resend (${resendCooldown}s)` : 'Resend code'}
-                  </Button>
-                </div>
-              </div>
-            ) : null}
+            {/* OTP flow removed */}
             <p className="text-xs text-muted-foreground">
               Already have an account? <Link className="underline underline-offset-2" href="/login">Sign in</Link>
             </p>

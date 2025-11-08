@@ -72,7 +72,7 @@ export async function register(input: {
   return (await res.json()) as AuthResponse
 }
 
-export async function googleSignIn(input: { idToken: string; emailConsent?: boolean; smsConsent?: boolean; phone?: string }): Promise<AuthResponse> {
+export async function googleSignIn(input: { idToken: string; emailConsent?: boolean; phone?: string }): Promise<AuthResponse> {
   const res = await fetch(`${API_BASE}/api/auth/google`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -81,60 +81,9 @@ export async function googleSignIn(input: { idToken: string; emailConsent?: bool
   if (!res.ok) await handleHttpError(res)
   return (await res.json()) as AuthResponse
 }
-
-export async function googleSignup(input: { idToken: string; emailConsent?: boolean; smsConsent?: boolean; phone?: string }): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/api/auth/google/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  })
-  if (!res.ok) await handleHttpError(res)
-  return (await res.json()) as AuthResponse
-}
-
-export async function verifyPhone(input: { phone: string; code: string }) {
-  const res = await fetch(`${API_BASE}/api/auth/verify-phone`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  })
-  if (!res.ok) await handleHttpError(res)
-  return (await res.json())
-}
-
-export async function verifyLoginOtp(input: { phone: string; code: string }): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/api/auth/verify-login-otp`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  })
-  if (!res.ok) await handleHttpError(res)
-  return (await res.json()) as AuthResponse
-}
-
-export async function resendOtp(input: { phone: string }) {
-  const res = await fetch(`${API_BASE}/api/auth/resend-otp`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  })
-  if (res.ok) {
-    return (await res.json())
-  }
-  // handle rate-limit specially so callers can show cooldown
-  if (res.status === 429) {
-    // try to parse body for retryAfter, fallback to Retry-After header
-    let body: any = null
-    try {
-      body = await res.json()
-    } catch {}
-    const header = res.headers.get('Retry-After')
-    const retryAfter = (body && body.retryAfter) || (header ? Number(header) : undefined)
-    return { ok: false, retryAfter }
-  }
-  await handleHttpError(res)
-  return null
-}
+// NOTE: SMS/OTP flows have been removed from the frontend. The server-side endpoints still exist
+// but SMS sending is disabled. The helper functions for verification/resend were intentionally
+// removed to avoid exposing OTP UI in the client.
 
 export function mapRoleToFrontend(role: BackendRole): "citizen" | "admin" {
   return role === "ADMIN" || role === "SUPER_ADMIN" ? "admin" : "citizen"

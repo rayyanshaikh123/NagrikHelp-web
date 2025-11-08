@@ -31,13 +31,10 @@ export default function CitizenProfilePage() {
   const [emailConsent, setEmailConsent] = useState<boolean>(() => {
     try { const v = (typeof window !== 'undefined' && window.localStorage.getItem('emailConsent')); return v == null ? true : v === 'true' } catch { return true }
   })
-  const [smsConsent, setSmsConsent] = useState<boolean>(() => {
-    try { const v = (typeof window !== 'undefined' && window.localStorage.getItem('smsConsent')); return v == null ? false : v === 'true' } catch { return false }
-  })
+  const [emailVerified, setEmailVerified] = useState<boolean>(false)
+  const [verifying, setVerifying] = useState<boolean>(false)
+  const [verificationCode, setVerificationCode] = useState<string>('')
   const [editing, setEditing] = useState(false)
-  const [otpNeeded, setOtpNeeded] = useState(false)
-  const [otpCode, setOtpCode] = useState('')
-  const [resendCooldown, setResendCooldown] = useState(0)
   const resendTimerRef = useRef<number | null>(null)
   const { toast } = useToast()
   const [mounted, setMounted] = useState(false)
@@ -76,9 +73,9 @@ export default function CitizenProfilePage() {
   try { console.debug('[Profile] /api/account/me response', data) } catch {}
         setName(data.name || localStorage.getItem('name') || '')
         setEmail(data.email || localStorage.getItem('email') || '')
-        setPhone(data.phone || localStorage.getItem('phone') || '')
-        setEmailConsent(data.emailConsent ?? true)
-        setSmsConsent(data.smsConsent ?? false)
+    setPhone(data.phone || localStorage.getItem('phone') || '')
+  setEmailConsent(data.emailConsent ?? true)
+    setEmailVerified(data.emailVerified ?? false)
         setUserId(data.email || localStorage.getItem('userId') || 'demo-user-1')
       } catch (e: any) {
         setFetchError(String(e?.message || e || 'Unknown error'))
@@ -126,7 +123,8 @@ export default function CitizenProfilePage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span className="font-medium max-w-[55%] truncate" title={email}>{email || '-'}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Phone</span><span className="font-medium max-w-[55%] truncate" title={phone}>{phone || '-'}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Email notifications</span><span className="font-medium">{emailConsent ? 'Enabled' : 'Disabled'}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">SMS notifications</span><span className="font-medium">{smsConsent ? 'Enabled' : 'Disabled'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Email verified</span><span className="font-medium">{emailVerified ? 'Yes' : 'No'}</span></div>
+                  {/* SMS notifications disabled in this build */}
                 <div className="flex justify-between"><span className="text-muted-foreground">Role</span><span className="font-medium">Citizen</span></div>
               </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">Manage notification preferences and phone verification here.</p>
@@ -149,6 +147,23 @@ export default function CitizenProfilePage() {
                 {!editing ? (
                   <div className="flex gap-2 pt-1">
                     <Button size="sm" onClick={() => setEditing(true)}>Edit profile</Button>
+                    {!emailVerified ? (
+                      <Button size="sm" variant="outline" onClick={async () => {
+                        try {
+                          setVerifying(true)
+                          const res = await authFetch(`${API_BASE}/api/account/me/send-email-verification`, { method: 'PUT' })
+                          if (!res.ok) {
+                            const text = await res.text()
+                            toast({ title: 'Send failed', description: text || 'Unable to send verification email', variant: 'destructive' })
+                            setVerifying(false)
+                            return
+                          }
+                          toast({ title: 'Verification sent', description: 'Check your email for the verification code.' })
+                        } catch (err: any) {
+                          toast({ title: 'Send failed', description: err?.message || 'Unable to send verification email', variant: 'destructive' })
+                        } finally { setVerifying(false) }
+                      }}>Verify email</Button>
+                    ) : null}
                   </div>
                 ) : (
                   <div className="space-y-3 pt-2">
@@ -158,13 +173,35 @@ export default function CitizenProfilePage() {
                     </div>
                     <div className="flex items-center gap-4">
                       <label className="flex items-center gap-2">
-                        <input type="checkbox" checked={emailConsent} onChange={(e) => setEmailConsent(e.target.checked)} />
+                        <input type="checkbox" checked={emailConsent} onChange={(e) => setEmailConsent(e.target.checked)} disabled={!emailVerified} />
                         <span className="text-sm">Allow email notifications</span>
                       </label>
-                      <label className="flex items-center gap-2">
-                        <input type="checkbox" checked={smsConsent} onChange={(e) => setSmsConsent(e.target.checked)} />
-                        <span className="text-sm">Allow SMS notifications</span>
-                      </label>
+                      {!emailVerified ? (
+                        <div className="flex items-center gap-2">
+                          <Input placeholder="Verification code" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} />
+                          <Button size="sm" onClick={async () => {
+                            try {
+                              if (!verificationCode || verificationCode.trim().length === 0) { toast({ title: 'Enter code', description: 'Please enter the verification code sent to your email', variant: 'destructive' }); return }
+                              const res = await authFetch(`${API_BASE}/api/account/me/verify-email`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: verificationCode.trim() }) })
+                              if (!res.ok) {
+                                const txt = await res.text()
+                                toast({ title: 'Verify failed', description: txt || 'Invalid code', variant: 'destructive' })
+                                return
+                              }
+                              const json = await res.json()
+                              if (json?.verified) {
+                                setEmailVerified(true)
+                                toast({ title: 'Verified', description: 'Email verified — you can now enable email notifications.' })
+                                // Optionally persist the emailConsent change if the user had toggled it while verifying
+                              } else {
+                                toast({ title: 'Verify failed', description: 'Invalid code', variant: 'destructive' })
+                              }
+                            } catch (err: any) {
+                              toast({ title: 'Verify failed', description: err?.message || 'Unable to verify code', variant: 'destructive' })
+                            }
+                          }}>Confirm</Button>
+                        </div>
+                      ) : null}
                     </div>
                     <div className="flex gap-2">
                       <Button onClick={async () => {
@@ -175,7 +212,7 @@ export default function CitizenProfilePage() {
                             toast({ title: 'Invalid phone', description: 'Phone must be in international format, e.g. +15551234567', variant: 'destructive' })
                             return
                           }
-                          const body = { phone: phone || null, emailConsent, smsConsent }
+                          const body = { phone: phone || null, emailConsent }
                           const res = await authFetch(`${API_BASE}/api/account/me`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
                           if (!res.ok) {
                             const text = await res.text()
@@ -187,16 +224,9 @@ export default function CitizenProfilePage() {
                           setEmail(data.email || email)
                           setPhone(data.phone || phone)
                           setEmailConsent(data.emailConsent ?? emailConsent)
-                          setSmsConsent(data.smsConsent ?? smsConsent)
                           try { if (data.phone) localStorage.setItem('phone', data.phone) } catch {}
-                          // if phone exists but not verified, server likely sent OTP
-                          if (data.phone && !data.phoneVerified) {
-                            setOtpNeeded(true)
-                            toast({ title: 'OTP sent', description: `A verification code was sent to ${data.phone}` })
-                          } else {
-                            setEditing(false)
-                            toast({ title: 'Profile saved', description: 'Your account was updated.' })
-                          }
+                          setEditing(false)
+                          toast({ title: 'Profile saved', description: 'Your account was updated.' })
                         } catch (err: any) {
                           toast({ title: 'Save failed', description: err?.message || 'Unable to save profile', variant: 'destructive' })
                         }
@@ -205,44 +235,7 @@ export default function CitizenProfilePage() {
                     </div>
                   </div>
                 )}
-                {otpNeeded ? (
-                  <div className="mt-4">
-                    <Label htmlFor="otp">Enter OTP sent to {phone}</Label>
-                    <Input id="otp" className="mt-1" value={otpCode} onChange={(e) => setOtpCode(e.target.value)} placeholder="123456" />
-                    <div className="flex gap-2 mt-2">
-                      <Button onClick={async () => {
-                        try {
-                          await authService.verifyPhone({ phone, code: otpCode })
-                          toast({ title: 'Phone verified', description: 'Your phone number has been verified.' })
-                          setOtpNeeded(false)
-                          // refresh profile
-                          const resp = await authFetch(`${API_BASE}/api/account/me`)
-                          if (resp.ok) {
-                            const d = await resp.json()
-                            setPhone(d.phone || phone)
-                            setSmsConsent(d.smsConsent ?? smsConsent)
-                          }
-                        } catch (e: any) {
-                          toast({ title: 'OTP verification failed', description: e?.message || 'Invalid code', variant: 'destructive' })
-                        }
-                      }}>Verify phone</Button>
-                      <Button variant="outline" onClick={async () => {
-                        try {
-                          const r = await authService.resendOtp({ phone })
-                          if (r && r.ok === false && r.retryAfter) {
-                            const seconds = Number(r.retryAfter) || 60
-                            setResendCooldown(seconds)
-                            toast({ title: 'Too many requests', description: `Please wait ${seconds}s before retrying`, variant: 'destructive' })
-                            return
-                          }
-                          toast({ title: 'OTP resent', description: `A new code was sent to ${phone}` })
-                        } catch (e: any) {
-                          toast({ title: 'Resend failed', description: e?.message || 'Unable to resend code', variant: 'destructive' })
-                        }
-                      }} disabled={resendCooldown > 0}>{resendCooldown > 0 ? `Resend (${resendCooldown}s)` : 'Resend code'}</Button>
-                    </div>
-                  </div>
-                ) : null}
+                {/* OTP flow removed */}
               <div className="flex flex-wrap gap-2 pt-1">
                 <Button asChild size="sm" variant="secondary"><Link href="/citizen/my-issues">My Issues</Link></Button>
                 <Button asChild size="sm" variant="outline"><Link href="/citizen/create">Report Issue</Link></Button>

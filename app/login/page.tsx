@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const googleButtonRef = useRef<HTMLDivElement | null>(null)
   const [emailConsent] = useState(true)
-  const [smsConsent] = useState(false)
+  // SMS/OTP removed from frontend: no smsConsent state
   const { toast } = useToast()
   const router = useRouter()
 
@@ -79,7 +79,7 @@ export default function LoginPage() {
           client_id: clientId,
           callback: async (resp: any) => {
             try {
-              const authResp = await authService.googleSignIn({ idToken: resp.credential, emailConsent, smsConsent })
+              const authResp = await authService.googleSignIn({ idToken: resp.credential, emailConsent })
               authService.persistAuth(authResp)
               toast({ title: 'Signed in with Google', description: `Welcome ${authResp.name}` })
               const role = authService.mapRoleToFrontend(authResp.role)
@@ -96,7 +96,7 @@ export default function LoginPage() {
     }
     document.head.appendChild(script)
     return () => { document.head.removeChild(script) }
-  }, [router, emailConsent, smsConsent])
+  }, [router, emailConsent])
 
   return (
     <main className="min-h-dvh flex items-center justify-center p-6">
