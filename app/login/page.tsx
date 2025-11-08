@@ -21,6 +21,7 @@ export default function LoginPage() {
   // SMS/OTP removed from frontend: no smsConsent state
   const { toast } = useToast()
   const router = useRouter()
+  const [googleDebugInfo, setGoogleDebugInfo] = useState<{googleClientId?: string, googleEnforceAud?: boolean} | null>(null)
 
   async function onSubmit() {
     setError(null)
@@ -67,7 +68,19 @@ export default function LoginPage() {
 
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-  if (!clientId) return
+    if (!clientId) {
+      ;(async () => {
+        try {
+          const resp = await fetch('/api/public/google/config')
+          if (!resp.ok) return
+          const json = await resp.json()
+          setGoogleDebugInfo(json)
+        } catch (e) {
+          // ignore
+        }
+      })()
+      return
+    }
     const script = document.createElement('script')
     script.src = 'https://accounts.google.com/gsi/client'
     script.async = true
@@ -122,6 +135,14 @@ export default function LoginPage() {
                   {loading ? "Signing in..." : "Sign in"}
                 </Button>
                 <div ref={googleButtonRef} className="mt-2" />
+                {!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && googleDebugInfo ? (
+                  <div className="mt-2 p-3 rounded border bg-yellow-50 text-sm">
+                    <div className="font-medium">Google Sign-in not configured</div>
+                    <div className="mt-1">Frontend Google client ID is missing. Backend reports:</div>
+                    <pre className="mt-2 text-xs bg-white p-2 rounded border">{JSON.stringify(googleDebugInfo, null, 2)}</pre>
+                    <div className="mt-2">Fixes: set <code>NEXT_PUBLIC_GOOGLE_CLIENT_ID</code> in your hosting environment and ensure the OAuth client allowed origins include your site (e.g. <code>https://your-domain.com</code>), then redeploy.</div>
+                  </div>
+                ) : null}
                 <p className="text-xs text-muted-foreground">
                   Don&apos;t have an account? <Link className="underline underline-offset-2" href="/register">Register</Link>
                 </p>
